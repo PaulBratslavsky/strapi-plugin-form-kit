@@ -1,5 +1,5 @@
 {
-  "name": "strapi-plugin-form-builder",
+  "name": "strapi-plugin-form-kit",
   "version": "0.1.0",
   "description": "Native Strapi v5 plugin for building, embedding, and managing forms — drag-and-drop builder, AI-assisted creation, submissions inbox, notifications, webhooks.",
   "license": "MIT",

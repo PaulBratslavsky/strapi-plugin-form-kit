@@ -6,7 +6,7 @@ knowledge* an AI agent needs to be productive without re-discovering it.
 
 ## What this is
 
-A Strapi v5 plugin (`packages/plugin/strapi-plugin-form-builder`) for building and
+A Strapi v5 plugin (`packages/plugin/strapi-plugin-form-kit`) for building and
 embedding forms, plus a dependency-free embed snippet (`packages/embed/`).
 The full product spec is in `resources/01-product.md` through
 `resources/06-claude-code-spec.md` — read those for the *why*.
@@ -26,7 +26,7 @@ Phases that have shipped on `master`:
 ./scripts/start.sh            # boot test-app at http://localhost:1337/admin
 ./scripts/start.sh --watch    # plugin source watched + rebuilt on save
 pnpm build                    # rebuild plugin from monorepo root
-pnpm -F strapi-plugin-form-builder test    # unit tests for the plugin
+pnpm -F strapi-plugin-form-kit test    # unit tests for the plugin
 ```
 
 The admin SPA hot-reloads on plugin source changes, but **server code does

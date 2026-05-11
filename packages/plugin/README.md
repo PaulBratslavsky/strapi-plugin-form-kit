@@ -1,4 +1,4 @@
-# strapi-plugin-form-builder
+# strapi-plugin-form-kit
 
 A native Strapi v5 plugin for building, embedding, and managing forms — drag-and-drop builder, submissions inbox, email notifications, webhooks.
 
