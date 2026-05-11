@@ -5,7 +5,7 @@ This guide takes you from a clean Strapi v5 project to a working contact form em
 ## 1. Install
 
 ```bash
-npm install strapi-plugin-forms
+npm install strapi-plugin-form-builder
 ```
 
 The embed runtime ships **inside the plugin** — you don't need a separate npm package for the script. In `config/plugins.ts` (or `.js`), enable the plugin:

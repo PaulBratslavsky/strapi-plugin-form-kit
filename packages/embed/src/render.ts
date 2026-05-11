@@ -198,6 +198,12 @@ export const renderInto = (
     }
 
     const payload = hooks.beforeSubmit ? await hooks.beforeSubmit({ ...data }) : { ...data };
+    // Returning `false` from beforeSubmit cancels the network call entirely.
+    // Used by the admin's Style-mode preview to validate-without-persisting.
+    if (payload === false) {
+      submitBtn.disabled = false;
+      return;
+    }
 
     try {
       const url = new URL(fetched.submissionUrl, baseUrl).toString();

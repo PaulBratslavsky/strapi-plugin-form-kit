@@ -117,7 +117,14 @@ export type FetchedSchema = {
 };
 
 export type RenderFormHooks = {
-  beforeSubmit?: (data: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>;
+  /**
+   * Inspect/mutate the payload before submit. Return:
+   *   - the payload object → submitted to the server (optionally augmented)
+   *   - `false` → cancel the submit, no network call (used in preview mode)
+   */
+  beforeSubmit?: (
+    data: Record<string, unknown>
+  ) => Record<string, unknown> | false | Promise<Record<string, unknown> | false>;
   afterSubmit?: (result: { submissionId: string | null; successMessage: string }) => void;
   onValidationError?: (errors: Record<string, string[]>) => void;
 };

@@ -8,7 +8,7 @@ A native Strapi v5 plugin that lets marketing and content teams build, embed, an
 
 | Path | Purpose |
 |---|---|
-| `packages/plugin/` | The Strapi v5 plugin (`strapi-plugin-forms`) — contains everything end users install |
+| `packages/plugin/` | The Strapi v5 plugin (`strapi-plugin-form-builder`) — contains everything end users install |
 | `packages/embed/` | The embed runtime source (`@strapi-forms/embed`). Its IIFE bundle is copied into the plugin's `dist/embed/` at build time and served at `/api/forms/embed.js`. Exists as a separate workspace mostly for code organisation. Publish to npm separately only if you want users to bundler-import it; not required for normal use. |
 | `test-app/` | A Strapi v5 sandbox project that links the plugin for local development |
 | `examples/embed-demo/` | A small Vite frontend that renders any published form locally — useful for sanity-checking the embed against a real Strapi instance |
@@ -18,7 +18,7 @@ A native Strapi v5 plugin that lets marketing and content teams build, embed, an
 **Deploy story (one command).** End users only install the plugin:
 
 ```bash
-npm install strapi-plugin-forms
+npm install strapi-plugin-form-builder
 ```
 
 The embed runtime ships inside the plugin's npm tarball — no separate package to install, no CDN to configure. See "Production install" below.
@@ -50,7 +50,7 @@ The script and iframe snippets target the form's stable `documentId` underneath,
 ## Production install
 
 ```bash
-npm install strapi-plugin-forms
+npm install strapi-plugin-form-builder
 ```
 
 Add to `config/plugins.ts`:
@@ -100,7 +100,7 @@ If you'd rather run the underlying commands directly:
 
 ```bash
 pnpm install
-pnpm --filter strapi-plugin-forms build
+pnpm --filter strapi-plugin-form-builder build
 pnpm --filter test-app develop
 ```
 
@@ -134,7 +134,7 @@ When any `STRAPI_FORMS_AI_*` is set, the admin AI settings page becomes read-onl
 
 What I'd prioritise if continuing this project, roughly in order:
 
-1. **Publish to npm.** The plugin is currently local-only. `npm publish` makes `npm install strapi-plugin-forms` work for real Strapi projects. Pre-flight: confirm the `dist/` includes `dist/embed/embed.js` (it does — `pnpm run copy:embed` runs as part of `build`).
+1. **Publish to npm.** The plugin is currently local-only. `npm publish` makes `npm install strapi-plugin-form-builder` work for real Strapi projects. Pre-flight: confirm the `dist/` includes `dist/embed/embed.js` (it does — `pnpm run copy:embed` runs as part of `build`).
 
 2. **Publish-time validation.** We relaxed `fields.min(1)` to allow empty drafts. Publish should enforce ≥ 1 field. One-liner gate in `controllers/admin-forms.ts#publish` or a lifecycle hook keyed on `publishedAt` change.
 
@@ -152,7 +152,7 @@ What I'd prioritise if continuing this project, roughly in order:
 
 9. **Skills framework for the AI layer.** The Build/Style mode-aware split is a clean stop, but the next AI feature (validation suggestions, copy improver) would benefit from a real `AiSkill` interface with pluggable input schemas + transforms. See the proposal in `CLAUDE.md` under "What's in flight."
 
-10. **CDN-served embed as an opt-in.** Self-hosted is the default and fine for most. But for sites with massive traffic or Strapi instances on small infra, allowing `<script src="https://cdn.jsdelivr.net/npm/strapi-plugin-forms-embed/...">` reduces bytes through Strapi. Implementation: a second build artefact published to npm; the share modal offers it as a 4th flavour.
+10. **CDN-served embed as an opt-in.** Self-hosted is the default and fine for most. But for sites with massive traffic or Strapi instances on small infra, allowing `<script src="https://cdn.jsdelivr.net/npm/strapi-plugin-form-builder-embed/...">` reduces bytes through Strapi. Implementation: a second build artefact published to npm; the share modal offers it as a 4th flavour.
 
 11. **Observability hook in the embed runtime.** When a submission fails on the host page, the host site has no idea. Either a `window.dispatchEvent('strapi-forms:error', ...)` for host pages to listen to, or an optional `onError` reporter URL configured per-form.
 
