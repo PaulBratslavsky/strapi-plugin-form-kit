@@ -1,7 +1,6 @@
 /**
- * Anthropic provider: uses the @anthropic-ai/sdk to call Claude with
- * messages.create / messages.stream. Auto-retries on parse failure up to
- * MAX_RETRIES.
+ * Anthropic provider: uses the @anthropic-ai/sdk to call Claude.
+ * SDK-bridging only — the parse+retry loop lives in ./retry.ts.
  *
  * Model defaults to claude-haiku-4-5 (fast, cheap, good enough for form
  * generation). Overridable via `model` in config or STRAPI_FORMS_AI_MODEL.
@@ -10,33 +9,84 @@ import Anthropic from '@anthropic-ai/sdk';
 import { type FormSchema } from '../../schemas/form-schema';
 import { buildRefinePrompt, buildStyleSystemPrompt, buildSystemPrompt } from './prompts';
 import { tryParseSchema, tryParseStyle } from './parse';
+import { runWithRetries, type ConversationMessage } from './retry';
 import type { AiProvider, AiProviderConfig, FieldTypeDescriptor } from './types';
 
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
-const MAX_RETRIES = 2;
-
-type ConvoMsg = { role: 'user' | 'assistant'; content: string };
+const ID = 'anthropic';
 
 export class AnthropicProvider implements AiProvider {
-  readonly id = 'anthropic';
+  readonly id = ID;
   private client: Anthropic;
   private model: string;
 
   constructor(config: AiProviderConfig) {
-    if (!config.apiKey) {
-      throw new Error('Anthropic provider requires an API key.');
-    }
+    if (!config.apiKey) throw new Error('Anthropic provider requires an API key.');
     this.client = new Anthropic({ apiKey: config.apiKey, baseURL: config.baseUrl });
     this.model = config.model ?? DEFAULT_MODEL;
   }
+
+  // Non-streaming wrapper around the same retry loop — the invoker just
+  // doesn't forward deltas (messages.create is one-shot).
+  private callOnce =
+    (system: string, maxTokens: number) =>
+    async ({ conversation, onDelta }: { conversation: ConversationMessage[]; onDelta: (s: string) => void }) => {
+      // Anthropic's `system` is a top-level param; user/assistant messages go in `messages`.
+      const messages = conversation.filter((m) => m.role !== 'system') as Array<{
+        role: 'user' | 'assistant';
+        content: string;
+      }>;
+      const res = await this.client.messages.create({
+        model: this.model,
+        max_tokens: maxTokens,
+        system,
+        messages,
+      });
+      return res.content
+        .filter((b) => b.type === 'text')
+        .map((b: any) => b.text)
+        .join('\n')
+        .trim();
+    };
+
+  // Streaming wrapper: same retry loop, but the invoker forwards token
+  // deltas via onDelta as they arrive.
+  private streamOnce =
+    (system: string, maxTokens: number) =>
+    async ({ conversation, onDelta }: { conversation: ConversationMessage[]; onDelta: (s: string) => void }) => {
+      const messages = conversation.filter((m) => m.role !== 'system') as Array<{
+        role: 'user' | 'assistant';
+        content: string;
+      }>;
+      let buffered = '';
+      const stream = this.client.messages.stream({
+        model: this.model,
+        max_tokens: maxTokens,
+        system,
+        messages,
+      });
+      stream.on('text', (delta: string) => {
+        buffered += delta;
+        onDelta(delta);
+      });
+      await stream.finalMessage();
+      return buffered;
+    };
 
   async generateForm(args: {
     prompt: string;
     availableFieldTypes: FieldTypeDescriptor[];
   }): Promise<FormSchema> {
-    return this.runWithRetries(args.availableFieldTypes, [
-      { role: 'user', content: args.prompt },
-    ]);
+    const system = buildSystemPrompt(args.availableFieldTypes);
+    return runWithRetries({
+      providerLabel: ID,
+      baseMessages: [{ role: 'user', content: args.prompt }],
+      invoke: this.callOnce(system, 4096),
+      parse: (raw) => {
+        const r = tryParseSchema(raw);
+        return r.ok ? { ok: true, value: r.schema } : r;
+      },
+    });
   }
 
   async refineForm(args: {
@@ -44,11 +94,20 @@ export class AnthropicProvider implements AiProvider {
     currentSchema: FormSchema;
     availableFieldTypes: FieldTypeDescriptor[];
   }): Promise<FormSchema> {
-    return this.runWithRetries(args.availableFieldTypes, [
-      { role: 'user', content: buildRefinePrompt(args.currentSchema) },
-      { role: 'assistant', content: 'Ready.' },
-      { role: 'user', content: args.instruction },
-    ]);
+    const system = buildSystemPrompt(args.availableFieldTypes);
+    return runWithRetries({
+      providerLabel: ID,
+      baseMessages: [
+        { role: 'user', content: buildRefinePrompt(args.currentSchema) },
+        { role: 'assistant', content: 'Ready.' },
+        { role: 'user', content: args.instruction },
+      ],
+      invoke: this.callOnce(system, 4096),
+      parse: (raw) => {
+        const r = tryParseSchema(raw);
+        return r.ok ? { ok: true, value: r.schema } : r;
+      },
+    });
   }
 
   async streamForm(args: {
@@ -59,47 +118,23 @@ export class AnthropicProvider implements AiProvider {
     onChunk: (text: string) => void;
   }): Promise<FormSchema> {
     const system = buildSystemPrompt(args.availableFieldTypes);
-    const messages: ConvoMsg[] = [];
+    const baseMessages: ConversationMessage[] = [];
     if (args.mode === 'refine' && args.currentSchema) {
-      messages.push({ role: 'user', content: buildRefinePrompt(args.currentSchema) });
-      messages.push({ role: 'assistant', content: 'Ready.' });
+      baseMessages.push({ role: 'user', content: buildRefinePrompt(args.currentSchema) });
+      baseMessages.push({ role: 'assistant', content: 'Ready.' });
     }
-    messages.push({ role: 'user', content: args.prompt });
+    baseMessages.push({ role: 'user', content: args.prompt });
 
-    let lastError: string | null = null;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      const convo = [...messages];
-      if (lastError) {
-        convo.push({
-          role: 'user',
-          content: `Your previous response was invalid: ${lastError}\nReturn ONLY the JSON object.`,
-        });
-      }
-
-      let buffered = '';
-      const stream = this.client.messages.stream({
-        model: this.model,
-        max_tokens: 4096,
-        system,
-        messages: convo,
-      });
-
-      stream.on('text', (delta: string) => {
-        buffered += delta;
-        args.onChunk(delta);
-      });
-
-      await stream.finalMessage();
-
-      const parsed = tryParseSchema(buffered);
-      if (parsed.ok) return parsed.schema;
-      lastError = parsed.error;
-    }
-
-    throw new Error(
-      `Anthropic produced invalid output after ${MAX_RETRIES + 1} attempts: ${lastError}`
-    );
+    return runWithRetries({
+      providerLabel: ID,
+      baseMessages,
+      invoke: this.streamOnce(system, 4096),
+      parse: (raw) => {
+        const r = tryParseSchema(raw);
+        return r.ok ? { ok: true, value: r.schema } : r;
+      },
+      onChunk: args.onChunk,
+    });
   }
 
   async streamStyle(args: {
@@ -108,37 +143,16 @@ export class AnthropicProvider implements AiProvider {
     onChunk: (text: string) => void;
   }): Promise<Record<string, unknown>> {
     const system = buildStyleSystemPrompt(args.currentTheme);
-    let lastError: string | null = null;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      const convo: ConvoMsg[] = [{ role: 'user', content: args.prompt }];
-      if (lastError) {
-        convo.push({
-          role: 'user',
-          content: `Your previous response was invalid: ${lastError}\nReturn ONLY the JSON object, nothing else.`,
-        });
-      }
-
-      let buffered = '';
-      const stream = this.client.messages.stream({
-        model: this.model,
-        max_tokens: 2048,
-        system,
-        messages: convo,
-      });
-      stream.on('text', (delta: string) => {
-        buffered += delta;
-        args.onChunk(delta);
-      });
-      await stream.finalMessage();
-
-      const parsed = tryParseStyle(buffered);
-      if (parsed.ok) return parsed.theme;
-      lastError = parsed.error;
-    }
-    throw new Error(
-      `Anthropic produced invalid style after ${MAX_RETRIES + 1} attempts: ${lastError}`
-    );
+    return runWithRetries({
+      providerLabel: ID,
+      baseMessages: [{ role: 'user', content: args.prompt }],
+      invoke: this.streamOnce(system, 2048),
+      parse: (raw) => {
+        const r = tryParseStyle(raw);
+        return r.ok ? { ok: true, value: r.theme } : r;
+      },
+      onChunk: args.onChunk,
+    });
   }
 
   async healthCheck(): Promise<{ ok: boolean; error?: string }> {
@@ -152,44 +166,5 @@ export class AnthropicProvider implements AiProvider {
     } catch (err) {
       return { ok: false, error: (err as Error).message };
     }
-  }
-
-  private async runWithRetries(
-    fieldTypes: FieldTypeDescriptor[],
-    messages: ConvoMsg[]
-  ): Promise<FormSchema> {
-    const system = buildSystemPrompt(fieldTypes);
-    let lastError: string | null = null;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      const conversation = [...messages];
-      if (lastError) {
-        conversation.push({
-          role: 'user',
-          content: `Your previous response was invalid: ${lastError}\nReturn ONLY the JSON object, nothing else.`,
-        });
-      }
-
-      const res = await this.client.messages.create({
-        model: this.model,
-        max_tokens: 4096,
-        system,
-        messages: conversation,
-      });
-
-      const text = res.content
-        .filter((block) => block.type === 'text')
-        .map((block: any) => block.text)
-        .join('\n')
-        .trim();
-
-      const parseResult = tryParseSchema(text);
-      if (parseResult.ok) return parseResult.schema;
-      lastError = parseResult.error;
-    }
-
-    throw new Error(
-      `Anthropic produced invalid output after ${MAX_RETRIES + 1} attempts: ${lastError}`
-    );
   }
 }

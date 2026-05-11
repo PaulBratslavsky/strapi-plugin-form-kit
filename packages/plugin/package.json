@@ -1,15 +1,33 @@
 {
-  "name": "strapi-plugin-forms",
+  "name": "strapi-plugin-form-builder",
   "version": "0.1.0",
-  "description": "Native Strapi v5 plugin for building, embedding, and managing forms — drag-and-drop builder, submissions inbox, notifications, webhooks.",
+  "description": "Native Strapi v5 plugin for building, embedding, and managing forms — drag-and-drop builder, AI-assisted creation, submissions inbox, notifications, webhooks.",
   "license": "MIT",
+  "author": "Paul Bratslavsky",
+  "homepage": "https://github.com/PaulBratslavsky/strapi-forms#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PaulBratslavsky/strapi-forms.git",
+    "directory": "packages/plugin"
+  },
+  "bugs": {
+    "url": "https://github.com/PaulBratslavsky/strapi-forms/issues"
+  },
   "keywords": [
     "strapi",
+    "strapi-plugin",
     "plugin",
+    "strapi-v5",
     "forms",
     "form-builder",
+    "embed",
     "submissions",
-    "webhooks"
+    "notifications",
+    "webhooks",
+    "ai",
+    "ollama",
+    "anthropic",
+    "openai"
   ],
   "type": "commonjs",
   "exports": {
@@ -34,11 +52,14 @@
     "admin/src",
     "server/src",
     "strapi-admin.js",
-    "strapi-server.js"
+    "strapi-server.js",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "pnpm run build:embed && strapi-plugin build && pnpm run copy:embed",
+    "build": "pnpm run build:embed && strapi-plugin build && pnpm run build:types && pnpm run copy:embed",
     "build:embed": "pnpm -F @strapi-forms/embed build",
+    "build:types": "tsc --emitDeclarationOnly --declarationMap --outDir dist || true",
     "copy:embed": "mkdir -p dist/embed && cp ../embed/dist/embed.iife.js dist/embed/embed.js && cp ../embed/dist/embed.iife.js.map dist/embed/embed.js.map 2>/dev/null || true",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
@@ -46,7 +67,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true"
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true",
+    "release": "pnpm run build && pnpm run verify && pnpm publish",
+    "release:dry": "pnpm run build && pnpm run verify && pnpm pack"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
@@ -64,6 +87,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@strapi-forms/embed": "workspace:*",
     "@strapi/design-system": "^2.0.0-rc.20",
     "@strapi/icons": "^2.0.0-rc.20",
     "@strapi/sdk-plugin": "^5.3.2",
@@ -104,5 +128,9 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

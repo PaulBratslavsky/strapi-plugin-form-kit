@@ -1,18 +1,16 @@
 /**
  * OpenAI-compatible provider. Used for both OpenAI's API and Ollama's
- * OpenAI-compatible endpoint (just point baseURL at the local server).
- * Same shape as the Anthropic provider but uses chat.completions + JSON mode.
+ * OpenAI-compatible endpoint — just point baseURL at the local server.
+ * SDK-bridging only — the parse+retry loop lives in ./retry.ts.
  */
 import OpenAI from 'openai';
 import { type FormSchema } from '../../schemas/form-schema';
 import { buildRefinePrompt, buildStyleSystemPrompt, buildSystemPrompt } from './prompts';
 import { tryParseSchema, tryParseStyle } from './parse';
+import { runWithRetries, type ConversationMessage } from './retry';
 import type { AiProvider, AiProviderConfig, FieldTypeDescriptor } from './types';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
-const MAX_RETRIES = 2;
-
-type ChatMsg = { role: 'system' | 'user' | 'assistant'; content: string };
 
 export class OpenAIProvider implements AiProvider {
   readonly id: string;
@@ -28,11 +26,59 @@ export class OpenAIProvider implements AiProvider {
     this.id = config.baseUrl?.includes('11434') ? 'ollama' : 'openai';
   }
 
+  private callOnce =
+    (system: string) =>
+    async ({ conversation }: { conversation: ConversationMessage[]; onDelta: (s: string) => void }) => {
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+        { role: 'system', content: system },
+        ...conversation,
+      ];
+      const res = await this.client.chat.completions.create({
+        model: this.model,
+        response_format: { type: 'json_object' } as any,
+        messages,
+      });
+      return res.choices[0]?.message?.content?.trim() ?? '';
+    };
+
+  private streamOnce =
+    (system: string) =>
+    async ({ conversation, onDelta }: { conversation: ConversationMessage[]; onDelta: (s: string) => void }) => {
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+        { role: 'system', content: system },
+        ...conversation,
+      ];
+      const stream = await this.client.chat.completions.create({
+        model: this.model,
+        response_format: { type: 'json_object' } as any,
+        messages,
+        stream: true,
+      });
+      let buffered = '';
+      for await (const chunk of stream as any) {
+        const delta: string = chunk?.choices?.[0]?.delta?.content ?? '';
+        if (delta) {
+          buffered += delta;
+          onDelta(delta);
+        }
+      }
+      return buffered;
+    };
+
   async generateForm(args: {
     prompt: string;
     availableFieldTypes: FieldTypeDescriptor[];
   }): Promise<FormSchema> {
-    return this.runWithRetries(args.availableFieldTypes, [{ role: 'user', content: args.prompt }]);
+    const system = buildSystemPrompt(args.availableFieldTypes);
+    return runWithRetries({
+      providerLabel: this.id,
+      baseMessages: [{ role: 'user', content: args.prompt }],
+      invoke: this.callOnce(system),
+      parse: (raw) => {
+        const r = tryParseSchema(raw);
+        return r.ok ? { ok: true, value: r.schema } : r;
+      },
+    });
   }
 
   async refineForm(args: {
@@ -40,11 +86,20 @@ export class OpenAIProvider implements AiProvider {
     currentSchema: FormSchema;
     availableFieldTypes: FieldTypeDescriptor[];
   }): Promise<FormSchema> {
-    return this.runWithRetries(args.availableFieldTypes, [
-      { role: 'user', content: buildRefinePrompt(args.currentSchema) },
-      { role: 'assistant', content: 'Ready.' },
-      { role: 'user', content: args.instruction },
-    ]);
+    const system = buildSystemPrompt(args.availableFieldTypes);
+    return runWithRetries({
+      providerLabel: this.id,
+      baseMessages: [
+        { role: 'user', content: buildRefinePrompt(args.currentSchema) },
+        { role: 'assistant', content: 'Ready.' },
+        { role: 'user', content: args.instruction },
+      ],
+      invoke: this.callOnce(system),
+      parse: (raw) => {
+        const r = tryParseSchema(raw);
+        return r.ok ? { ok: true, value: r.schema } : r;
+      },
+    });
   }
 
   async streamForm(args: {
@@ -55,48 +110,23 @@ export class OpenAIProvider implements AiProvider {
     onChunk: (text: string) => void;
   }): Promise<FormSchema> {
     const system = buildSystemPrompt(args.availableFieldTypes);
-    const messages: ChatMsg[] = [{ role: 'system', content: system }];
+    const baseMessages: ConversationMessage[] = [];
     if (args.mode === 'refine' && args.currentSchema) {
-      messages.push({ role: 'user', content: buildRefinePrompt(args.currentSchema) });
-      messages.push({ role: 'assistant', content: 'Ready.' });
+      baseMessages.push({ role: 'user', content: buildRefinePrompt(args.currentSchema) });
+      baseMessages.push({ role: 'assistant', content: 'Ready.' });
     }
-    messages.push({ role: 'user', content: args.prompt });
+    baseMessages.push({ role: 'user', content: args.prompt });
 
-    let lastError: string | null = null;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      const convo = [...messages];
-      if (lastError) {
-        convo.push({
-          role: 'user',
-          content: `Your previous response was invalid: ${lastError}\nReturn ONLY the JSON object.`,
-        });
-      }
-
-      const stream = await this.client.chat.completions.create({
-        model: this.model,
-        response_format: { type: 'json_object' } as any,
-        messages: convo,
-        stream: true,
-      });
-
-      let buffered = '';
-      for await (const chunk of stream as any) {
-        const delta: string = chunk?.choices?.[0]?.delta?.content ?? '';
-        if (delta) {
-          buffered += delta;
-          args.onChunk(delta);
-        }
-      }
-
-      const parsed = tryParseSchema(buffered);
-      if (parsed.ok) return parsed.schema;
-      lastError = parsed.error;
-    }
-
-    throw new Error(
-      `OpenAI-compatible provider produced invalid output after ${MAX_RETRIES + 1} attempts: ${lastError}`
-    );
+    return runWithRetries({
+      providerLabel: this.id,
+      baseMessages,
+      invoke: this.streamOnce(system),
+      parse: (raw) => {
+        const r = tryParseSchema(raw);
+        return r.ok ? { ok: true, value: r.schema } : r;
+      },
+      onChunk: args.onChunk,
+    });
   }
 
   async streamStyle(args: {
@@ -105,43 +135,16 @@ export class OpenAIProvider implements AiProvider {
     onChunk: (text: string) => void;
   }): Promise<Record<string, unknown>> {
     const system = buildStyleSystemPrompt(args.currentTheme);
-    let lastError: string | null = null;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      const convo: ChatMsg[] = [
-        { role: 'system', content: system },
-        { role: 'user', content: args.prompt },
-      ];
-      if (lastError) {
-        convo.push({
-          role: 'user',
-          content: `Your previous response was invalid: ${lastError}\nReturn ONLY the JSON object.`,
-        });
-      }
-
-      const stream = await this.client.chat.completions.create({
-        model: this.model,
-        response_format: { type: 'json_object' } as any,
-        messages: convo,
-        stream: true,
-      });
-
-      let buffered = '';
-      for await (const chunk of stream as any) {
-        const delta: string = chunk?.choices?.[0]?.delta?.content ?? '';
-        if (delta) {
-          buffered += delta;
-          args.onChunk(delta);
-        }
-      }
-
-      const parsed = tryParseStyle(buffered);
-      if (parsed.ok) return parsed.theme;
-      lastError = parsed.error;
-    }
-    throw new Error(
-      `OpenAI-compatible provider produced invalid style after ${MAX_RETRIES + 1} attempts: ${lastError}`
-    );
+    return runWithRetries({
+      providerLabel: this.id,
+      baseMessages: [{ role: 'user', content: args.prompt }],
+      invoke: this.streamOnce(system),
+      parse: (raw) => {
+        const r = tryParseStyle(raw);
+        return r.ok ? { ok: true, value: r.theme } : r;
+      },
+      onChunk: args.onChunk,
+    });
   }
 
   async healthCheck() {
@@ -155,38 +158,5 @@ export class OpenAIProvider implements AiProvider {
     } catch (err) {
       return { ok: false, error: (err as Error).message };
     }
-  }
-
-  private async runWithRetries(
-    fieldTypes: FieldTypeDescriptor[],
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>
-  ): Promise<FormSchema> {
-    const system = buildSystemPrompt(fieldTypes);
-    let lastError: string | null = null;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      const conversation: any[] = [{ role: 'system', content: system }, ...messages];
-      if (lastError) {
-        conversation.push({
-          role: 'user',
-          content: `Your previous response was invalid: ${lastError}\nReturn ONLY the JSON object.`,
-        });
-      }
-
-      const res = await this.client.chat.completions.create({
-        model: this.model,
-        response_format: { type: 'json_object' } as any,
-        messages: conversation,
-      });
-
-      const text = res.choices[0]?.message?.content?.trim() ?? '';
-      const parseResult = tryParseSchema(text);
-      if (parseResult.ok) return parseResult.schema;
-      lastError = parseResult.error;
-    }
-
-    throw new Error(
-      `OpenAI-compatible provider produced invalid output after ${MAX_RETRIES + 1} attempts: ${lastError}`
-    );
   }
 }

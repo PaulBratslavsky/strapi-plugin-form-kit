@@ -1,6 +1,7 @@
 import { errors } from '@strapi/utils';
 import type { Core } from '@strapi/strapi';
 import { encrypt } from '../utils/encryption';
+import { streamSSE } from '../utils/sse';
 
 const { ValidationError } = errors;
 
@@ -45,26 +46,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       throw new ValidationError('currentSchema is required for layout refine');
     }
 
-    // Bypass Koa's default response handling so we can write incrementally.
-    ctx.respond = false;
-    const res = ctx.res;
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // disable nginx buffering if any
-    res.flushHeaders?.();
-
-    const send = (payload: Record<string, unknown>) => {
-      res.write(`data: ${JSON.stringify(payload)}\n\n`);
-    };
-
-    let aborted = false;
-    ctx.req.on('close', () => {
-      aborted = true;
-    });
-
-    try {
+    await streamSSE(ctx, async (emit, signal) => {
       const result = await strapi
         .plugin('forms')
         .service('ai')
@@ -74,22 +56,15 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
           prompt,
           currentSchema: body.currentSchema,
           currentTheme: body.currentTheme,
-          onChunk: (text: string) => {
-            if (!aborted) send({ type: 'chunk', text });
-          },
+          onChunk: (text: string) => emit({ type: 'chunk', text }),
         });
-      if (!aborted) {
-        if (result.target === 'style') {
-          send({ type: 'done', target: 'style', theme: result.theme });
-        } else {
-          send({ type: 'done', target: 'layout', schema: result.schema });
-        }
+      if (signal.aborted) return;
+      if (result.target === 'style') {
+        emit({ type: 'done', target: 'style', theme: result.theme });
+      } else {
+        emit({ type: 'done', target: 'layout', schema: result.schema });
       }
-    } catch (err) {
-      if (!aborted) send({ type: 'error', error: (err as Error).message });
-    } finally {
-      res.end();
-    }
+    });
   },
 
   /** POST /forms/admin/ai/refine — { instruction, currentSchema } → FormSchema. */

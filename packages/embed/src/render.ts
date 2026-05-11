@@ -75,7 +75,16 @@ export const renderInto = (
     const noLabelClass = field.style?.hideLabel ? ' sf-field--no-label' : '';
     const fieldWrapper = el('div', {
       class: `sf-field sf-field--${field.type}${widthClass}${noLabelClass}`,
+      // Both attributes are public DOM contract: `data-field-id` is the
+      // historical embed convention; `data-sf-field-id` is the admin's
+      // selection-target attribute used in Style mode. Emitting both keeps
+      // host-page CSS overrides AND the in-admin preview's click-to-select
+      // pattern working through the same DOM. `data-sf-field-id-label`
+      // is the human-readable label the admin's selection chip reads via
+      // `content: attr(data-sf-field-id-label)`. Harmless on a real page.
       'data-field-id': field.id,
+      'data-sf-field-id': field.id,
+      'data-sf-field-id-label': `${field.label ?? field.type} · ${field.type}`,
     });
     const fieldVars = fieldStyleToVars(field.style);
     for (const [k, v] of Object.entries(fieldVars)) {
@@ -146,7 +155,13 @@ export const renderInto = (
     { type: 'submit', class: 'sf-submit' },
     [schema.settings.submitButtonLabel ?? 'Submit']
   );
-  const submitRow = el('div', { class: 'sf-submit-row' });
+  // The submit row gets a footer marker so Style-mode preview can target
+  // the whole footer area for the "click here to edit submit button" UX.
+  const submitRow = el('div', {
+    class: 'sf-submit-row',
+    'data-sf-field-id': '__footer__',
+    'data-sf-field-id-label': 'Submit button · footer',
+  });
   submitRow.appendChild(submitBtn);
   formEl.appendChild(submitRow);
 
