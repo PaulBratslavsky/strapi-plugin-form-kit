@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "strapi_forms_forms",
+  "info": {
+    "singularName": "form",
+    "pluralName": "forms",
+    "displayName": "Form",
+    "description": "A form definition (drag-and-drop schema, embeddable on any frontend)."
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": false,
+      "minLength": 1
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": false
+    },
+    "schema": {
+      "type": "json",
+      "required": true
+    },
+    "submissions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::forms.submission",
+      "mappedBy": "form"
+    },
+    "notificationRules": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::forms.notification-rule",
+      "mappedBy": "form"
+    },
+    "webhookConfigs": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::forms.webhook-config",
+      "mappedBy": "form"
+    }
+  }
+}

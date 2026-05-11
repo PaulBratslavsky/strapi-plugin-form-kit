@@ -1,0 +1,27 @@
+node_modules/
+dist/
+build/
+.cache/
+.turbo/
+.next/
+.strapi/
+.vite/
+coverage/
+*.log
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+.vscode/
+.idea/
+.claude/
+
+# Strapi
+test-app/.tmp/
+test-app/build/
+test-app/dist/
+test-app/.cache/
+test-app/public/uploads/*
+!test-app/public/uploads/.gitkeep
+test-app/exports/

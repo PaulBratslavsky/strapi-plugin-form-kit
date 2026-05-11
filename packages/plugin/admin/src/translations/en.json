@@ -1,0 +1,18 @@
+{
+  "plugin.name": "Forms",
+  "FormsList.title": "Forms",
+  "FormsList.create": "Create new form",
+  "FormsList.search": "Search forms",
+  "FormsList.empty": "No forms yet. Create your first form.",
+  "FormBuilder.save": "Save form",
+  "FormBuilder.fieldPalette.title": "Field types",
+  "FormBuilder.canvas.empty": "Drag a field from the left to start building.",
+  "FormBuilder.settings.title": "Form settings",
+  "Submissions.title": "Submissions",
+  "Submissions.tab.submitted": "New",
+  "Submissions.tab.read": "Read",
+  "Submissions.tab.spam": "Spam",
+  "Notifications.title": "Email notifications",
+  "Webhooks.title": "Webhooks",
+  "Settings.title": "Forms settings"
+}

@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "strapi_forms_webhook_configs",
+  "info": {
+    "singularName": "webhook-config",
+    "pluralName": "webhook-configs",
+    "displayName": "Webhook config",
+    "description": "Outgoing webhook configuration attached to a form. `hmacSecret` stored encrypted at rest."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "form": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::forms.form",
+      "inversedBy": "webhookConfigs",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 1
+    },
+    "url": {
+      "type": "string",
+      "required": true,
+      "regex": "^https?://"
+    },
+    "method": {
+      "type": "enumeration",
+      "enum": ["POST", "PUT"],
+      "default": "POST",
+      "required": true
+    },
+    "headers": {
+      "type": "json",
+      "required": false
+    },
+    "hmacSecretEncrypted": {
+      "type": "string",
+      "required": false,
+      "private": true
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    }
+  }
+}

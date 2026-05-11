@@ -1,0 +1,208 @@
+/**
+ * Default Strapi Forms embed styles. Every meaningful element has a documented .sf-*
+ * class — see docs/embed-snippet.md. Visual properties are driven by CSS variables
+ * so the form's `settings.theme` can override them at runtime; the variables and
+ * their default values are the public theme contract.
+ *
+ * Bumping the major version is required to break either contract.
+ */
+
+.sf-form {
+  /* Theme tokens — overridable via settings.theme, see plugin's themes.ts */
+  --sf-primary: #1f77ff;
+  --sf-primary-contrast: #ffffff;
+  --sf-text: #1a1a1a;
+  --sf-muted: #666;
+  --sf-bg: #ffffff;
+  --sf-input-bg: #ffffff;
+  --sf-input-border-color: var(--sf-border);
+  --sf-input-radius: var(--sf-radius);
+  --sf-input-padding: 8px 12px;
+  --sf-border: #c8c8c8;
+  --sf-border-focus: #4f8cff;
+  --sf-border-width: 1px;
+  --sf-error: #c0392b;
+  --sf-error-bg: #fdecea;
+  --sf-success: #18794e;
+  --sf-success-bg: #e6f7ed;
+  --sf-radius: 4px;
+  --sf-shadow: none;
+  --sf-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sf-font-size: 15px;
+  --sf-label-size: 0.875rem;
+  --sf-field-gap: 20px;
+  --sf-label-display: block;
+  --sf-label-margin: 0 0 4px 0;
+  --sf-btn-bg: var(--sf-primary);
+  --sf-btn-color: var(--sf-primary-contrast);
+  --sf-btn-border: transparent;
+  --sf-btn-padding: 8px 20px;
+  --sf-btn-width: auto;
+  --sf-btn-align: flex-start;
+  --sf-form-max-width: 560px;
+  --sf-form-padding: 24px;
+
+  display: block;
+  max-width: var(--sf-form-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--sf-form-padding);
+  font-family: var(--sf-font);
+  font-size: var(--sf-font-size);
+  color: var(--sf-text);
+  background: var(--sf-bg);
+  /* Parity with admin FormPreview.tsx — themes like Bold use --sf-shadow
+     to put a hard offset shadow on the whole form wrapper, not just the
+     submit button. */
+  border-radius: var(--sf-radius);
+  box-shadow: var(--sf-shadow, none);
+  box-sizing: border-box;
+}
+
+.sf-submit-row {
+  display: flex;
+  justify-content: var(--sf-btn-align);
+}
+
+.sf-field {
+  margin-bottom: var(--sf-field-gap);
+}
+
+.sf-label {
+  display: var(--sf-label-display);
+  font-weight: 600;
+  font-size: var(--sf-label-size);
+  margin: var(--sf-label-margin);
+  color: var(--sf-text);
+}
+
+.sf-required-mark {
+  color: var(--sf-error);
+  margin-left: 0.125rem;
+}
+
+.sf-input,
+.sf-form select,
+.sf-form textarea {
+  display: block;
+  width: 100%;
+  padding: var(--sf-input-padding);
+  font: inherit;
+  font-size: var(--sf-font-size);
+  color: var(--sf-text);
+  background: var(--sf-input-bg);
+  border: var(--sf-border-width) solid var(--sf-input-border-color);
+  border-radius: var(--sf-input-radius);
+  box-sizing: border-box;
+}
+
+.sf-input:focus,
+.sf-form select:focus,
+.sf-form textarea:focus {
+  outline: 2px solid var(--sf-border-focus);
+  outline-offset: 1px;
+  border-color: var(--sf-border-focus);
+}
+
+.sf-help {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--sf-muted);
+}
+
+.sf-error {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--sf-error);
+}
+
+.sf-field--invalid .sf-input,
+.sf-field--invalid select,
+.sf-field--invalid textarea {
+  border-color: var(--sf-error);
+}
+
+.sf-radio-group,
+.sf-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sf-radio,
+.sf-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sf-submit {
+  display: inline-block;
+  padding: var(--sf-btn-padding);
+  font: inherit;
+  font-weight: var(--sf-btn-font-weight, 600);
+  font-size: var(--sf-btn-font-size, inherit);
+  color: var(--sf-btn-color);
+  background: var(--sf-btn-bg);
+  border: var(--sf-btn-border-width, var(--sf-border-width)) solid var(--sf-btn-border);
+  border-radius: var(--sf-radius);
+  cursor: pointer;
+  box-shadow: var(--sf-shadow);
+  width: var(--sf-btn-width);
+}
+
+/* Multi-column row layout for per-field width overrides (style.width). */
+.sf-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-field-gap);
+  margin-bottom: var(--sf-field-gap);
+}
+.sf-row .sf-field {
+  margin-bottom: 0;
+  min-width: 0;
+}
+.sf-field--w-full { flex: 0 0 100%; }
+.sf-field--w-half { flex: 0 0 calc(50% - var(--sf-field-gap) / 2); }
+.sf-field--w-third { flex: 0 0 calc(33.333% - var(--sf-field-gap) * 2 / 3); }
+.sf-field--w-two-thirds { flex: 0 0 calc(66.666% - var(--sf-field-gap) / 3); }
+
+.sf-field--no-label .sf-label {
+  display: none;
+}
+
+.sf-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sf-success {
+  padding: 0.75rem 1rem;
+  background: var(--sf-success-bg);
+  color: var(--sf-success);
+  border-radius: var(--sf-radius);
+}
+
+.sf-error-banner {
+  padding: 0.75rem 1rem;
+  background: var(--sf-error-bg);
+  color: var(--sf-error);
+  border-radius: var(--sf-radius);
+  margin-bottom: 1rem;
+}
+
+.sf-content {
+  margin-bottom: var(--sf-field-gap);
+}
+
+.sf-honeypot {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+}

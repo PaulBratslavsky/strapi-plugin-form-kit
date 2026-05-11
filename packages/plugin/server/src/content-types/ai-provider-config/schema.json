@@ -1,0 +1,38 @@
+{
+  "kind": "singleType",
+  "collectionName": "strapi_forms_ai_provider_config",
+  "info": {
+    "singularName": "ai-provider-config",
+    "pluralName": "ai-provider-configs",
+    "displayName": "AI provider config",
+    "description": "Per-instance AI provider configuration. Encrypted apiKey at rest. Phase 2."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "provider": {
+      "type": "enumeration",
+      "enum": ["anthropic", "openai", "ollama", "mock", "none"],
+      "default": "none",
+      "required": true
+    },
+    "apiKeyEncrypted": {
+      "type": "string",
+      "required": false,
+      "private": true
+    },
+    "baseUrl": {
+      "type": "string",
+      "required": false
+    },
+    "model": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

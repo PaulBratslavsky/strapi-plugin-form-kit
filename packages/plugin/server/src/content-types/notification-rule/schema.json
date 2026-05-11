@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "strapi_forms_notification_rules",
+  "info": {
+    "singularName": "notification-rule",
+    "pluralName": "notification-rules",
+    "displayName": "Notification rule",
+    "description": "Email notification configuration attached to a form."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "form": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::forms.form",
+      "inversedBy": "notificationRules",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 1
+    },
+    "recipients": {
+      "type": "json",
+      "required": true
+    },
+    "subjectTemplate": {
+      "type": "string",
+      "required": true,
+      "minLength": 1
+    },
+    "bodyTemplate": {
+      "type": "text",
+      "required": true,
+      "minLength": 1
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    }
+  }
+}

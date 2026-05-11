@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strapi Forms · embed demo</title>
+    <style>
+      :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0; padding: 32px 24px; background: #f6f6f9; color: #1a1a2e; }
+      header { max-width: 760px; margin: 0 auto 24px; }
+      h1 { margin: 0 0 4px; font-size: 1.5rem; }
+      p.muted { margin: 0 0 16px; color: #666687; font-size: 0.875rem; }
+      label { display: block; margin-bottom: 6px; font-size: 0.875rem; color: #4a4a6a; }
+      select { width: 100%; padding: 8px 10px; border: 1px solid #dcdce4; border-radius: 6px; background: #fff; font: inherit; }
+      .panel { max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid #dcdce4; border-radius: 12px; padding: 24px; }
+      .empty { color: #8e8ea9; font-style: italic; text-align: center; padding: 40px 0; }
+      .meta { margin-top: 16px; padding-top: 16px; border-top: 1px solid #dcdce4; font-size: 0.8125rem; color: #666687; }
+      code { background: #f0f0f4; padding: 1px 4px; border-radius: 3px; font-size: 0.875em; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Strapi Forms — embed demo</h1>
+      <p class="muted">Renders any published form from your local Strapi using <code>@strapi-forms/embed</code>.</p>
+      <label for="form-picker">Published form</label>
+      <select id="form-picker">
+        <option value="">— loading… —</option>
+      </select>
+    </header>
+    <div class="panel">
+      <div id="target" class="empty">Pick a form above to render it here.</div>
+      <div class="meta" id="meta"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "strapi_forms_submissions",
+  "info": {
+    "singularName": "submission",
+    "pluralName": "submissions",
+    "displayName": "Submission",
+    "description": "One row per form submission. `data` is keyed by field UUID."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": false
+    },
+    "content-type-builder": {
+      "visible": false
+    }
+  },
+  "attributes": {
+    "form": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::forms.form",
+      "inversedBy": "submissions",
+      "required": true
+    },
+    "data": {
+      "type": "json",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["submitted", "read", "spam"],
+      "default": "submitted",
+      "required": true
+    },
+    "metadata": {
+      "type": "json",
+      "required": false
+    }
+  }
+}
