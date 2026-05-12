@@ -145,6 +145,46 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     ctx.body = { data: copy };
   },
 
+  /**
+   * GET /forms-plugin/admin/content-types — list api::* and plugin::* collection
+   * types eligible for `optionsSource` dropdowns. Returns each type's UID,
+   * display info, and string-typed attributes (candidates for labelField).
+   * Used by the dropdown config UI to populate the collection picker.
+   */
+  async contentTypes(ctx: any) {
+    const out: Array<{
+      uid: string;
+      displayName: string;
+      kind: 'collectionType' | 'singleType';
+      stringAttributes: string[];
+    }> = [];
+
+    for (const [uid, ct] of Object.entries(strapi.contentTypes as Record<string, any>)) {
+      // Only expose collection types from api::* and plugin namespaces — never
+      // admin::* (users, permissions) or internal Strapi types.
+      if (!uid.startsWith('api::') && !uid.startsWith('plugin::')) continue;
+      if (ct.kind !== 'collectionType') continue;
+      // Hide our own plugin's internal types from the picker.
+      if (uid.startsWith('plugin::forms.') || uid.startsWith('plugin::upload.')) continue;
+
+      const stringAttributes = Object.entries(ct.attributes ?? {})
+        .filter(([, attr]: [string, any]) =>
+          ['string', 'text', 'uid', 'email'].includes(attr?.type)
+        )
+        .map(([name]) => name);
+
+      out.push({
+        uid,
+        displayName: ct.info?.displayName ?? ct.info?.singularName ?? uid,
+        kind: 'collectionType',
+        stringAttributes,
+      });
+    }
+
+    out.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    ctx.body = { data: out };
+  },
+
   /** GET /forms-plugin/admin/field-types — list registered field types for the builder palette. */
   async fieldTypes(ctx: any) {
     const registry = strapi.plugin('forms').service('fieldRegistry');

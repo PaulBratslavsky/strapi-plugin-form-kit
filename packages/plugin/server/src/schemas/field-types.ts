@@ -15,6 +15,21 @@ export const FieldBase = z.object({
 });
 
 /**
+ * Dynamic options for choice fields (dropdown / radio / checkboxes). When
+ * present on a field, the public schema endpoint resolves the referenced
+ * collection at read time and projects each row to a `{ label, value }`
+ * pair, substituting into `options` before the response is sent. Static
+ * `options` still works — `optionsSource` is purely additive.
+ */
+export const OptionsSource = z.object({
+  kind: z.literal('collection'),
+  uid: z.string(),           // e.g. "api::product.product"
+  labelField: z.string(),    // attribute name shown to the user
+  valueField: z.string().default('documentId'), // attribute submitted
+});
+export type OptionsSource = z.infer<typeof OptionsSource>;
+
+/**
  * Discriminated union over the 12 core field types. Custom field types extend this
  * union at runtime via the FieldRegistry — see field-registry.ts and core-field-types.ts.
  */
@@ -30,15 +45,18 @@ export const CoreField = z.discriminatedUnion('type', [
   FieldBase.extend({ type: z.literal('url') }),
   FieldBase.extend({
     type: z.literal('dropdown'),
-    options: z.array(ChoiceOption).min(1),
+    options: z.array(ChoiceOption).min(1).optional(),
+    optionsSource: OptionsSource.optional(),
   }),
   FieldBase.extend({
     type: z.literal('radio'),
-    options: z.array(ChoiceOption).min(1),
+    options: z.array(ChoiceOption).min(1).optional(),
+    optionsSource: OptionsSource.optional(),
   }),
   FieldBase.extend({
     type: z.literal('checkboxes'),
-    options: z.array(ChoiceOption).min(1),
+    options: z.array(ChoiceOption).min(1).optional(),
+    optionsSource: OptionsSource.optional(),
   }),
   FieldBase.extend({
     type: z.literal('date'),

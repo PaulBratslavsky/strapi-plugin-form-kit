@@ -50,6 +50,14 @@ export type FieldTypeEntry = {
   aiHint: string;
 };
 
+export type ContentTypeEntry = {
+  uid: string;
+  displayName: string;
+  kind: 'collectionType' | 'singleType';
+  /** Attribute names of type string/text/uid/email — candidates for labelField. */
+  stringAttributes: string[];
+};
+
 /**
  * Thin wrapper around `useFetchClient` so callers don't repeat the prefix or unwrap
  * `data` themselves. Returns memoised callbacks safe for use in React effects.
@@ -114,6 +122,11 @@ export const useFormsApi = () => {
 
   const listFieldTypes = useCallback(async (): Promise<FieldTypeEntry[]> => {
     const r = await get(`${PREFIX}/field-types`);
+    return r.data?.data ?? [];
+  }, [get]);
+
+  const listContentTypes = useCallback(async (): Promise<ContentTypeEntry[]> => {
+    const r = await get(`${PREFIX}/content-types`);
     return r.data?.data ?? [];
   }, [get]);
 
@@ -389,6 +402,7 @@ export const useFormsApi = () => {
     duplicateForm,
     deleteForm,
     listFieldTypes,
+    listContentTypes,
     listNotificationRules,
     createNotificationRule,
     updateNotificationRule,

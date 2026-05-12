@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { errors } from '@strapi/utils';
 import type { Core } from '@strapi/strapi';
+import { resolveOptionsSources } from '../services/options-source-resolver';
 
 const { NotFoundError } = errors;
 
@@ -112,11 +113,15 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       return;
     }
 
+    // Resolve any `optionsSource` references on choice fields against
+    // their collections. Static `options` arrays pass through untouched.
+    const resolvedSchema = await resolveOptionsSources(strapi, form.schema);
+
     ctx.body = {
       schemaVersion: form.schema?.schemaVersion ?? 1,
       formId: form.documentId,
       slug: form.slug,
-      schema: form.schema,
+      schema: resolvedSchema,
       submissionUrl: `/api/forms/${form.slug}/submit`,
     };
   },
@@ -169,9 +174,13 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       return;
     }
 
-    // Validate the submission against the form's current schema.
+    // Validate the submission against the form's current schema. Fields
+    // with `optionsSource` need their options resolved *before* validation
+    // — otherwise the "value-in-options" check rejects anything submitted
+    // since the stored schema only has the source reference, not the rows.
+    const validatableSchema = await resolveOptionsSources(strapi, form.schema);
     const validator = strapi.plugin('forms').service('formSchemaValidator');
-    const result = validator.validateSubmission({ schema: form.schema, data });
+    const result = validator.validateSubmission({ schema: validatableSchema, data });
 
     if (!result.ok) {
       ctx.status = 400;

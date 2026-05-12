@@ -60,6 +60,13 @@ export default {
       handler: 'admin-forms.fieldTypes',
       config: { policies: adminPolicy },
     },
+    // ---- Content-type picker for optionsSource dropdowns ----
+    {
+      method: 'GET',
+      path: '/admin/content-types',
+      handler: 'admin-forms.contentTypes',
+      config: { policies: adminPolicy },
+    },
     // ---- Copy-as-AI-prompt (M9) ----
     {
       method: 'GET',
