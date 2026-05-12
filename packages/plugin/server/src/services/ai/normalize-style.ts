@@ -11,7 +11,11 @@
  */
 import type { LooseStyleInput } from './loose-style-schema';
 
+// Curated palette the prompt advertises to the model + a generous spillover
+// of common CSS / Tailwind names so things the model emits unprompted
+// ("navy", "teal", "lavender") still resolve instead of getting dropped.
 const NAMED_COLORS: Record<string, string> = {
+  // Curated (in the system prompt)
   indigo: '#4945ff',
   blue: '#0066cc',
   emerald: '#10b981',
@@ -31,13 +35,53 @@ const NAMED_COLORS: Record<string, string> = {
   silver: '#cbd5e1',
   black: '#000000',
   white: '#ffffff',
+  // Common spillover the model picks unprompted
+  red: '#dc2626',
+  orange: '#f97316',
+  yellow: '#eab308',
+  green: '#22c55e',
+  teal: '#14b8a6',
+  cyan: '#06b6d4',
+  navy: '#1e3a8a',
+  purple: '#9333ea',
+  violet: '#8b5cf6',
+  lavender: '#c4b5fd',
+  pink: '#ec4899',
+  magenta: '#d946ef',
+  brown: '#92400e',
+  beige: '#f5f5dc',
+  ivory: '#fffff0',
+  charcoal: '#1f2937',
+  gray: '#6b7280',
+  grey: '#6b7280',
+  lightgray: '#d1d5db',
+  lightgrey: '#d1d5db',
+  darkgray: '#374151',
+  darkgrey: '#374151',
+  darkblue: '#1e40af',
+  lightblue: '#93c5fd',
+  darkgreen: '#15803d',
+  lightgreen: '#86efac',
+  // Common semantic words the model uses for "light" or "dark" backgrounds
+  light: '#fafafa',
+  dark: '#0a0a14',
 };
 
 const resolveColor = (value: string | undefined): string | undefined => {
-  if (!value) return undefined;
-  if (value.startsWith('#')) return value.toLowerCase();
-  const named = NAMED_COLORS[value.toLowerCase()];
-  return named ?? undefined;
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return undefined;
+  // Accept any hex (3, 4, 6, or 8 digits) — return canonical lowercase form.
+  if (/^#[0-9a-f]{3,8}$/.test(trimmed)) return trimmed;
+  // Accept rgb()/rgba()/hsl()/hsla() as-is; CSS engines parse them fine.
+  if (/^(rgb|rgba|hsl|hsla)\(/.test(trimmed)) return trimmed;
+  const named = NAMED_COLORS[trimmed];
+  if (named) return named;
+  // Last-ditch: try removing common modifiers ("dark-", "light-", "soft-").
+  const stripped = trimmed.replace(/^(dark|light|soft|deep|bright|pale)[-\s]/, '');
+  if (NAMED_COLORS[stripped]) return NAMED_COLORS[stripped];
+  // Unknown — drop silently. Better than aborting the whole style update.
+  return undefined;
 };
 
 export const looseToTheme = (loose: LooseStyleInput) => {

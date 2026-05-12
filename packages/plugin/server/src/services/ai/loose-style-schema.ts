@@ -9,34 +9,19 @@
  */
 import { z } from 'zod';
 
-const Hex = z.string().regex(/^#[0-9a-f]{3,8}$/i);
+// Colors are permissive at the schema level — the model can emit hex,
+// a named color from our palette, a CSS named color, or whatever weirdness
+// it dreams up. normalize-style.ts is responsible for resolving valid
+// values and silently dropping unknown ones. This mirrors how the layout
+// pipeline treats unknown field types (drop or alias, never throw).
+// Previously this used a strict enum and a single unfamiliar color name
+// from the model would fail the whole response → 3 retries → user-visible
+// error.
+const ColorValue = z.string();
 
-// Named colors the model is allowed to use as a shortcut. Mirrors the
-// vibe palette; normalize-style.ts resolves these to hex.
-const NAMED_COLOR = z.enum([
-  'indigo',
-  'blue',
-  'emerald',
-  'amber',
-  'rose',
-  'coral',
-  'slate',
-  'graphite',
-  'cream',
-  'pearl',
-  'midnight',
-  'forest',
-  'sky',
-  'sunset',
-  'lime',
-  'gold',
-  'silver',
-  'black',
-  'white',
-]);
-
-const ColorValue = z.union([Hex, NAMED_COLOR]);
-
+// Enum values are still strict — they're a small known vocabulary the
+// model can hit reliably, and falling through to "drop the field" is a
+// fine fallback if the model emits a wrong value.
 export const LooseStyleSchema = z
   .object({
     preset: z.enum(['clean', 'editorial', 'friendly', 'bold']).optional(),
