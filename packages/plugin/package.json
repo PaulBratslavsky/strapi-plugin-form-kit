@@ -1,17 +1,17 @@
 {
   "name": "strapi-plugin-form-kit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Native Strapi v5 plugin for building, embedding, and managing forms — drag-and-drop builder, AI-assisted creation, submissions inbox, notifications, webhooks.",
   "license": "MIT",
   "author": "Paul Bratslavsky",
-  "homepage": "https://github.com/PaulBratslavsky/strapi-forms#readme",
+  "homepage": "https://github.com/PaulBratslavsky/strapi-plugin-form-kit#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PaulBratslavsky/strapi-forms.git",
+    "url": "git+https://github.com/PaulBratslavsky/strapi-plugin-form-kit.git",
     "directory": "packages/plugin"
   },
   "bugs": {
-    "url": "https://github.com/PaulBratslavsky/strapi-forms/issues"
+    "url": "https://github.com/PaulBratslavsky/strapi-plugin-form-kit/issues"
   },
   "keywords": [
     "strapi",
