@@ -67,6 +67,12 @@ export default {
       handler: 'admin-forms.contentTypes',
       config: { policies: adminPolicy },
     },
+    {
+      method: 'POST',
+      path: '/admin/resolve-options-source',
+      handler: 'admin-forms.resolveOptionsSource',
+      config: { policies: adminPolicy },
+    },
     // ---- Copy-as-AI-prompt (M9) ----
     {
       method: 'GET',

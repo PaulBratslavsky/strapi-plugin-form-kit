@@ -45,17 +45,20 @@ export const CoreField = z.discriminatedUnion('type', [
   FieldBase.extend({ type: z.literal('url') }),
   FieldBase.extend({
     type: z.literal('dropdown'),
-    options: z.array(ChoiceOption).min(1).optional(),
+    // Drafts may have empty `options` (user is mid-edit or toggled
+    // optionsSource off). Publish-time validation enforces at-least-one
+    // option / a configured optionsSource separately.
+    options: z.array(ChoiceOption).optional(),
     optionsSource: OptionsSource.optional(),
   }),
   FieldBase.extend({
     type: z.literal('radio'),
-    options: z.array(ChoiceOption).min(1).optional(),
+    options: z.array(ChoiceOption).optional(),
     optionsSource: OptionsSource.optional(),
   }),
   FieldBase.extend({
     type: z.literal('checkboxes'),
-    options: z.array(ChoiceOption).min(1).optional(),
+    options: z.array(ChoiceOption).optional(),
     optionsSource: OptionsSource.optional(),
   }),
   FieldBase.extend({

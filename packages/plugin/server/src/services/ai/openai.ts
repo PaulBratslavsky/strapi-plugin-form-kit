@@ -8,7 +8,7 @@ import { type FormSchema } from '../../schemas/form-schema';
 import { buildRefinePrompt, buildStyleSystemPrompt, buildSystemPrompt } from './prompts';
 import { tryParseSchema, tryParseStyle } from './parse';
 import { runWithRetries, type ConversationMessage } from './retry';
-import type { AiProvider, AiProviderConfig, FieldTypeDescriptor } from './types';
+import type { AiProvider, AiProviderConfig, CollectionDescriptor, FieldTypeDescriptor } from './types';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
@@ -68,8 +68,9 @@ export class OpenAIProvider implements AiProvider {
   async generateForm(args: {
     prompt: string;
     availableFieldTypes: FieldTypeDescriptor[];
+    availableCollections?: CollectionDescriptor[];
   }): Promise<FormSchema> {
-    const system = buildSystemPrompt(args.availableFieldTypes);
+    const system = buildSystemPrompt(args.availableFieldTypes, args.availableCollections);
     return runWithRetries({
       providerLabel: this.id,
       baseMessages: [{ role: 'user', content: args.prompt }],
@@ -85,8 +86,9 @@ export class OpenAIProvider implements AiProvider {
     instruction: string;
     currentSchema: FormSchema;
     availableFieldTypes: FieldTypeDescriptor[];
+    availableCollections?: CollectionDescriptor[];
   }): Promise<FormSchema> {
-    const system = buildSystemPrompt(args.availableFieldTypes);
+    const system = buildSystemPrompt(args.availableFieldTypes, args.availableCollections);
     return runWithRetries({
       providerLabel: this.id,
       baseMessages: [
@@ -107,9 +109,10 @@ export class OpenAIProvider implements AiProvider {
     prompt: string;
     currentSchema?: FormSchema;
     availableFieldTypes: FieldTypeDescriptor[];
+    availableCollections?: CollectionDescriptor[];
     onChunk: (text: string) => void;
   }): Promise<FormSchema> {
-    const system = buildSystemPrompt(args.availableFieldTypes);
+    const system = buildSystemPrompt(args.availableFieldTypes, args.availableCollections);
     const baseMessages: ConversationMessage[] = [];
     if (args.mode === 'refine' && args.currentSchema) {
       baseMessages.push({ role: 'user', content: buildRefinePrompt(args.currentSchema) });

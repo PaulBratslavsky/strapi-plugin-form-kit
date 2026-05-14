@@ -15,6 +15,15 @@ const LooseOption = z.object({
   label: z.string().optional(),
 });
 
+const LooseOptionsSource = z
+  .object({
+    kind: z.literal('collection'),
+    uid: z.string(),
+    labelField: z.string(),
+    valueField: z.string().optional(),
+  })
+  .passthrough();
+
 const LooseField = z
   .object({
     type: z.string(),
@@ -27,6 +36,11 @@ const LooseField = z
     maxLength: z.number().optional(),
     pattern: z.string().optional(),
     options: z.array(LooseOption).optional(),
+    // For dropdown/radio/checkboxes — when present, server resolves to
+    // concrete options at /schema read time. Mutually exclusive with
+    // static `options` in practice; normaliser doesn't synthesize a
+    // placeholder when this is set.
+    optionsSource: LooseOptionsSource.optional(),
   })
   .passthrough();
 

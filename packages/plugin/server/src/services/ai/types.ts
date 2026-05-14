@@ -11,6 +11,17 @@ export type FieldTypeDescriptor = {
   aiHint: string;
 };
 
+/**
+ * Strapi content type the AI may reference via `optionsSource` on a choice
+ * field. Same shape as the admin's content-types picker — filtered to
+ * collection types and projected to the columns the picker actually uses.
+ */
+export type CollectionDescriptor = {
+  uid: string;
+  displayName: string;
+  stringAttributes: string[];
+};
+
 export interface AiProvider {
   readonly id: string;
   /**
@@ -21,6 +32,7 @@ export interface AiProvider {
   generateForm(args: {
     prompt: string;
     availableFieldTypes: FieldTypeDescriptor[];
+    availableCollections?: CollectionDescriptor[];
   }): Promise<FormSchema>;
 
   /**
@@ -31,6 +43,7 @@ export interface AiProvider {
     instruction: string;
     currentSchema: FormSchema;
     availableFieldTypes: FieldTypeDescriptor[];
+    availableCollections?: CollectionDescriptor[];
   }): Promise<FormSchema>;
 
   /**
@@ -43,6 +56,7 @@ export interface AiProvider {
     prompt: string;
     currentSchema?: FormSchema;
     availableFieldTypes: FieldTypeDescriptor[];
+    availableCollections?: CollectionDescriptor[];
     onChunk: (text: string) => void;
   }): Promise<FormSchema>;
 

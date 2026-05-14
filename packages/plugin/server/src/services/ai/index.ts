@@ -8,7 +8,7 @@
 import type { Core } from '@strapi/strapi';
 import { NoneProvider } from './none';
 import { MockProvider } from './mock';
-import type { AiProvider, AiProviderConfig, FieldTypeDescriptor } from './types';
+import type { AiProvider, AiProviderConfig, CollectionDescriptor, FieldTypeDescriptor } from './types';
 import { decrypt } from '../../utils/encryption';
 
 const resolveConfig = async (strapi: Core.Strapi): Promise<AiProviderConfig> => {
@@ -115,12 +115,37 @@ const service = ({ strapi }: { strapi: Core.Strapi } = { strapi: undefined as an
     }));
   };
 
+  // Enumerate api::* and plugin::* collection types the AI may reference via
+  // `optionsSource`. Same filter as admin-forms.contentTypes so the AI's
+  // mental model matches the picker UI.
+  const collectionDescriptors = (): CollectionDescriptor[] => {
+    const out: CollectionDescriptor[] = [];
+    for (const [uid, ct] of Object.entries($strapi.contentTypes as Record<string, any>)) {
+      if (!uid.startsWith('api::') && !uid.startsWith('plugin::')) continue;
+      if (ct.kind !== 'collectionType') continue;
+      if (uid.startsWith('plugin::forms.') || uid.startsWith('plugin::upload.')) continue;
+      const stringAttributes = Object.entries(ct.attributes ?? {})
+        .filter(([, attr]: [string, any]) =>
+          ['string', 'text', 'uid', 'email'].includes(attr?.type)
+        )
+        .map(([name]) => name);
+      out.push({
+        uid,
+        displayName: ct.info?.displayName ?? ct.info?.singularName ?? uid,
+        stringAttributes,
+      });
+    }
+    out.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    return out;
+  };
+
   return {
     async generate(prompt: string) {
       const provider = await ensure();
       return provider.generateForm({
         prompt,
         availableFieldTypes: fieldTypeDescriptors(),
+        availableCollections: collectionDescriptors(),
       });
     },
 
@@ -130,6 +155,7 @@ const service = ({ strapi }: { strapi: Core.Strapi } = { strapi: undefined as an
         instruction,
         currentSchema,
         availableFieldTypes: fieldTypeDescriptors(),
+        availableCollections: collectionDescriptors(),
       });
     },
 
@@ -160,6 +186,7 @@ const service = ({ strapi }: { strapi: Core.Strapi } = { strapi: undefined as an
         prompt: args.prompt,
         currentSchema: args.currentSchema,
         availableFieldTypes: fieldTypeDescriptors(),
+        availableCollections: collectionDescriptors(),
         onChunk: args.onChunk,
       });
       return { target: 'layout' as const, schema };

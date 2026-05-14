@@ -10,7 +10,53 @@
 import type { FormSchema } from '../../schemas/form-schema';
 import type { FieldTypeDescriptor } from './types';
 
-export const buildSystemPrompt = (fieldTypes: FieldTypeDescriptor[]): string => `
+export type CollectionDescriptor = {
+  uid: string;
+  displayName: string;
+  stringAttributes: string[];
+};
+
+export const buildSystemPrompt = (
+  fieldTypes: FieldTypeDescriptor[],
+  collections: CollectionDescriptor[] = []
+): string => {
+  const collectionsBlock = collections.length
+    ? `
+
+Available collections (for choice fields whose options should come from
+existing data — products, events, customers, etc.):
+${collections
+  .map(
+    (c) =>
+      `- ${c.uid} (${c.displayName}) — text attributes: ${
+        c.stringAttributes.length ? c.stringAttributes.join(', ') : '(none — use documentId)'
+      }`
+  )
+  .join('\n')}
+
+When the user clearly references one of these collections ("an event
+picker", "let them choose a product", "department dropdown"), use a
+dropdown / radio / checkboxes field with \`optionsSource\` instead of
+hand-writing static options:
+
+  {
+    "type": "dropdown",
+    "name": "event",
+    "label": "Event",
+    "optionsSource": {
+      "kind": "collection",
+      "uid": "api::event.event",
+      "labelField": "title"
+    }
+  }
+
+Pick \`labelField\` from the collection's text attributes (the first
+sensible-looking name field). Skip "options" entirely when using
+optionsSource. valueField defaults to "documentId" — only set it if the
+user asks for a different identifier.`
+    : '';
+
+  return `
 You design forms. Given a brief, return ONLY a JSON object describing the
 fields. The host application will assign IDs, defaults, and settings — your
 job is purely the content.
@@ -37,15 +83,17 @@ Shape:
 }
 
 Field type hints:
-${fieldTypes.map((f) => `- ${f.name}: ${f.aiHint}`).join('\n')}
+${fieldTypes.map((f) => `- ${f.name}: ${f.aiHint}`).join('\n')}${collectionsBlock}
 
 Rules:
 - Use ONLY the field types listed above.
-- "options" is REQUIRED for dropdown, radio, checkboxes (1+ options).
+- For dropdown / radio / checkboxes: provide EITHER static "options" (1+) OR
+  "optionsSource" referencing a collection. Never both, never neither.
 - Labels are short and human ("Email", not "Email Address Field").
 - Don't ask clarifying questions. Make reasonable assumptions.
 - Return ONLY the JSON object. No markdown fences. No commentary.
 `.trim();
+};
 
 export const buildStyleSystemPrompt = (currentTheme?: any): string => `
 You design form themes. Given a user instruction, return ONLY a JSON object

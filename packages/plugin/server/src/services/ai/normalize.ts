@@ -117,23 +117,46 @@ export const looseToFormSchema = (loose: LooseSchemaInput | any) => {
       if (typeof f?.helpText === 'string') out.helpText = f.helpText;
 
       if (CHOICE_TYPES.has(type)) {
-        const rawOptions = Array.isArray(f?.options) ? f.options : [];
-        const options = rawOptions
-          .map((o: any) => {
-            const value =
-              (typeof o?.value === 'string' && o.value.trim()) ||
-              (typeof o?.label === 'string' && slugify(o.label)) ||
-              '';
-            const optLabel =
-              (typeof o?.label === 'string' && o.label.trim()) ||
-              (typeof o?.value === 'string' && titleCase(o.value)) ||
-              value;
-            return value ? { value, label: optLabel } : null;
-          })
-          .filter(Boolean);
-        // Choice fields require at least one option — synthesize one if missing.
-        out.options =
-          options.length > 0 ? options : [{ value: 'option_1', label: 'Option 1' }];
+        // Collection-backed dropdowns: pass `optionsSource` through and skip
+        // the static-options dance entirely. The /schema endpoint's resolver
+        // populates `options` at read time with rows from the collection.
+        const sourceRaw = f?.optionsSource;
+        const isValidSource =
+          sourceRaw &&
+          typeof sourceRaw === 'object' &&
+          typeof sourceRaw.uid === 'string' &&
+          typeof sourceRaw.labelField === 'string';
+
+        if (isValidSource) {
+          out.optionsSource = {
+            kind: 'collection',
+            uid: sourceRaw.uid,
+            labelField: sourceRaw.labelField,
+            valueField:
+              typeof sourceRaw.valueField === 'string' ? sourceRaw.valueField : 'documentId',
+          };
+          // Don't synthesize static options when sourcing from a collection —
+          // resolver will populate at runtime.
+        } else {
+          const rawOptions = Array.isArray(f?.options) ? f.options : [];
+          const options = rawOptions
+            .map((o: any) => {
+              const value =
+                (typeof o?.value === 'string' && o.value.trim()) ||
+                (typeof o?.label === 'string' && slugify(o.label)) ||
+                '';
+              const optLabel =
+                (typeof o?.label === 'string' && o.label.trim()) ||
+                (typeof o?.value === 'string' && titleCase(o.value)) ||
+                value;
+              return value ? { value, label: optLabel } : null;
+            })
+            .filter(Boolean);
+          // Choice fields with no source need at least one static option as a
+          // starting point — synthesize one if missing.
+          out.options =
+            options.length > 0 ? options : [{ value: 'option_1', label: 'Option 1' }];
+        }
       }
 
       return out;

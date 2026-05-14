@@ -6,6 +6,36 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-14
+### Added
+- **AI is now aware of available collections.** The system prompt advertises
+  every `api::*` / `plugin::*` collection type with its string attributes.
+  Prompts like *"event picker from our Events collection"* now produce a
+  dropdown with `optionsSource` instead of inventing static options.
+- Loose-schema (`loose-schema.ts`) accepts an `optionsSource` shape on
+  choice fields. Normaliser (`normalize.ts`) passes it through and skips
+  static-option synthesis when present.
+- New admin endpoint `POST /forms-plugin/admin/resolve-options-source` —
+  resolves a single source on demand. Powers the Preview & test modal so
+  the in-modal render shows the exact options the live form will see.
+- `FormPreview.tsx` calls the resolver for each `optionsSource` field and
+  caches by `(uid, labelField, valueField)`. Live updates as the picker
+  config changes; no save needed.
+
+### Changed
+- Choice field `options` is now `optional` (was `min(1)`). Drafts may save
+  with empty options arrays while the admin is mid-edit. Publish-time
+  enforcement is a future TODO.
+- Switching the "From collection" toggle off seeds one starter option so
+  the dropdown isn't a confusing blank state.
+- New callout in the collection picker explains the access model — options
+  are resolved server-side, no public read access required.
+
+### Fixed
+- Toggling "From collection" on now clears stale static `options`. Without
+  this, the editor state (and Preview & test modal) kept rendering "Option
+  1 / Option 2" even after the toggle was active.
+
 ## [0.3.0] — 2026-05-14
 ### Added
 - **Per-IP rate limiting on `POST /api/forms/:slug/submit`**. Default 10
@@ -75,7 +105,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **ETag-based schema revalidation** — republished forms reflect on the next
   page load with no manual cache invalidation.
 
-[Unreleased]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.1.1...v0.2.0

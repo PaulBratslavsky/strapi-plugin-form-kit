@@ -34,6 +34,45 @@ export default {
   register() {},
 
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    // Seed four published Events so the collection-backed dropdown picker
+    // has something to point at. Idempotent — only inserts if zero events.
+    const eventCount = await strapi.documents('api::event.event' as any).count({});
+    if (eventCount === 0) {
+      const SAMPLE_EVENTS = [
+        {
+          title: 'Strapi Conf 2026',
+          startsAt: '2026-09-18T09:00:00.000Z',
+          location: 'Paris, France',
+          description: 'Annual Strapi developer conference — talks, workshops, and demos.',
+        },
+        {
+          title: 'Plugin Authors Meetup',
+          startsAt: '2026-06-12T18:00:00.000Z',
+          location: 'Online (Zoom)',
+          description: 'Roundtable for plugin authors: marketplace strategy, monorepo tooling, npm distribution.',
+        },
+        {
+          title: 'AI in CMS Workshop',
+          startsAt: '2026-07-23T13:00:00.000Z',
+          location: 'San Francisco, CA',
+          description: 'Hands-on session: integrating LLMs into content workflows with Strapi.',
+        },
+        {
+          title: 'Headless Day Berlin',
+          startsAt: '2026-10-05T10:00:00.000Z',
+          location: 'Berlin, Germany',
+          description: 'Community day for headless CMS practitioners — case studies and lightning talks.',
+        },
+      ];
+      for (const data of SAMPLE_EVENTS) {
+        await strapi.documents('api::event.event' as any).create({
+          data,
+          status: 'published',
+        } as any);
+      }
+      strapi.log.info('[test-app] seeded 4 sample events');
+    }
+
     // Seed a sample published "contact" form if none exists.
     const existing = await strapi
       .documents('plugin::forms.form')

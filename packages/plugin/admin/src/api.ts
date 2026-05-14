@@ -130,6 +130,18 @@ export const useFormsApi = () => {
     return r.data?.data ?? [];
   }, [get]);
 
+  const resolveOptionsSource = useCallback(
+    async (args: {
+      uid: string;
+      labelField: string;
+      valueField?: string;
+    }): Promise<Array<{ label: string; value: string }>> => {
+      const r = await post(`${PREFIX}/resolve-options-source`, args);
+      return r.data?.data ?? [];
+    },
+    [post]
+  );
+
   const listNotificationRules = useCallback(
     async (formDocumentId: string) => {
       const r = await get(`${PREFIX}/forms/${formDocumentId}/notifications`);
@@ -403,6 +415,7 @@ export const useFormsApi = () => {
     deleteForm,
     listFieldTypes,
     listContentTypes,
+    resolveOptionsSource,
     listNotificationRules,
     createNotificationRule,
     updateNotificationRule,

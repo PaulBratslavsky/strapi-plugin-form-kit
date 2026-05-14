@@ -185,6 +185,33 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     ctx.body = { data: out };
   },
 
+  /**
+   * POST /forms-plugin/admin/resolve-options-source — resolve a single
+   * collection-backed optionsSource and return the option rows. Used by
+   * the FormPreview component so the preview/Preview-&-test modal can
+   * render the actual options that the live form will see, not stale
+   * static fallbacks. Mirrors the public resolver but is admin-only and
+   * round-trips one source at a time (the preview hits this once per
+   * dropdown field on render).
+   */
+  async resolveOptionsSource(ctx: any) {
+    const body = ctx.request.body ?? {};
+    const uid = String(body.uid ?? '');
+    const labelField = String(body.labelField ?? '');
+    const valueField = String(body.valueField ?? 'documentId');
+    if (!uid || !labelField) {
+      ctx.body = { data: [] };
+      return;
+    }
+    const { resolveOptionsSources } = await import(
+      '../services/options-source-resolver'
+    );
+    const resolved = await resolveOptionsSources(strapi, {
+      fields: [{ type: 'dropdown', optionsSource: { kind: 'collection', uid, labelField, valueField } }],
+    } as any);
+    ctx.body = { data: (resolved as any)?.fields?.[0]?.options ?? [] };
+  },
+
   /** GET /forms-plugin/admin/field-types — list registered field types for the builder palette. */
   async fieldTypes(ctx: any) {
     const registry = strapi.plugin('forms').service('fieldRegistry');

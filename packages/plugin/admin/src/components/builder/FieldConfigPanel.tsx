@@ -203,9 +203,21 @@ const ChoiceOptionsConfig = ({ field, onChange }: Props) => {
             checked={fromCollection}
             onChange={() => {
               if (fromCollection) {
-                onChange({ optionsSource: undefined } as any);
-              } else {
+                // Switching back to static — seed one option so the dropdown
+                // has *something* and the user has an obvious starting row
+                // to edit. Empty arrays render as a blank "Select…" with
+                // nothing in it which is confusing.
                 onChange({
+                  optionsSource: undefined,
+                  options: [{ label: 'Option 1', value: 'option_1' }],
+                } as any);
+              } else {
+                // Switching to collection mode — wipe any lingering static
+                // options. Otherwise the preview shows them, and any browser
+                // that cached an older `/schema` response keeps rendering
+                // them until the cache rotates.
+                onChange({
+                  options: [],
                   optionsSource: {
                     kind: 'collection',
                     uid: '',
@@ -249,6 +261,16 @@ const CollectionPicker = ({
 
   return (
     <Box hasRadius padding={3} background="neutral100" borderColor="neutral200">
+      <Box marginBottom={3} padding={2} background="primary100" hasRadius>
+        <Typography variant="pi" textColor="primary700">
+          <strong>Note:</strong> options are resolved server-side at the form's
+          schema endpoint — you do <em>not</em> need to grant public read access
+          to the collection in Users & Permissions. Only the label and value
+          attributes you pick are exposed to the form. Only published entries
+          are included.
+        </Typography>
+      </Box>
+
       <Box marginBottom={3}>
         <Field.Root name="collection-uid" hint="Choose a Strapi collection to pull options from.">
           <Field.Label>Collection</Field.Label>

@@ -16,6 +16,7 @@ import styled from 'styled-components';
 import { renderForm } from '@strapi-forms/embed';
 import type { FormDraft } from '../../hooks/useFormSchema';
 import type { ThemePreset } from './themes';
+import { useFormsApi } from '../../api';
 
 type Props = {
   schema: FormDraft;
@@ -78,26 +79,79 @@ export const FormPreview = ({
   themePresetOverride,
 }: Props) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const { resolveOptionsSource } = useFormsApi();
   const [sendReal, setSendReal] = useState(false);
   const [result, setResult] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
+  // Cache of resolved options keyed by the optionsSource signature. Re-fetches
+  // when the user changes uid / labelField / valueField. Lets the preview
+  // render the *exact* options the live form will see — no static-fallback
+  // surprises.
+  const [resolvedOptions, setResolvedOptions] = useState<
+    Record<string, Array<{ label: string; value: string }>>
+  >({});
 
   // Resolve the schema we'll hand to renderForm. Two-way override:
   //   - themePresetOverride (preview-only preset flipping)
   //   - sendReal toggle (preview-only behaviour, not part of schema)
+  //   - fields with `optionsSource` get their `options` populated from the
+  //     admin-side resolver cache (fetched in the effect below). This way
+  //     the preview shows the *exact* options the live form will see, not
+  //     stale static fallbacks.
   const previewSchema = useMemo(() => {
     const base = schema as FormDraft;
-    if (!themePresetOverride) return base;
+    const cleanedFields = (base.fields ?? []).map((f: any) => {
+      if (!f?.optionsSource) return f;
+      const key = sourceKey(f.optionsSource);
+      return { ...f, options: resolvedOptions[key] ?? [] };
+    });
     return {
       ...base,
-      settings: {
-        ...base.settings,
-        theme: {
-          ...(base.settings?.theme ?? {}),
-          preset: themePresetOverride,
-        },
-      },
+      fields: cleanedFields,
+      settings: themePresetOverride
+        ? {
+            ...base.settings,
+            theme: {
+              ...(base.settings?.theme ?? {}),
+              preset: themePresetOverride,
+            },
+          }
+        : base.settings,
     } as FormDraft;
-  }, [schema, themePresetOverride]);
+  }, [schema, themePresetOverride, resolvedOptions]);
+
+  // Fetch resolved options for every field with an `optionsSource` that the
+  // cache doesn't already cover. Runs whenever the schema's set of sources
+  // changes — adding a field, swapping the collection, switching the label
+  // field, etc.
+  useEffect(() => {
+    const sources: Array<{ key: string; uid: string; labelField: string; valueField?: string }> = [];
+    for (const f of schema?.fields ?? []) {
+      const src = (f as any).optionsSource;
+      if (!src?.uid || !src?.labelField) continue;
+      sources.push({ key: sourceKey(src), uid: src.uid, labelField: src.labelField, valueField: src.valueField });
+    }
+    const missing = sources.filter((s) => !(s.key in resolvedOptions));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      const fetched: Record<string, Array<{ label: string; value: string }>> = {};
+      for (const s of missing) {
+        try {
+          fetched[s.key] = await resolveOptionsSource({
+            uid: s.uid,
+            labelField: s.labelField,
+            valueField: s.valueField,
+          });
+        } catch {
+          fetched[s.key] = [];
+        }
+      }
+      if (!cancelled) setResolvedOptions((prev) => ({ ...prev, ...fetched }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [schema, resolveOptionsSource, resolvedOptions]);
 
   // The embed runtime owns DOM rendering. We re-mount on schema change
   // and clean up on unmount. preloadedSchema bypasses the network — works
@@ -189,3 +243,11 @@ export const FormPreview = ({
     </Container>
   );
 };
+
+/**
+ * Stable cache key for an optionsSource — used by the resolved-options cache
+ * in `FormPreview`. Mirrors the three fields the server resolver actually
+ * keys off (uid + labelField + valueField).
+ */
+const sourceKey = (src: { uid?: string; labelField?: string; valueField?: string }): string =>
+  `${src.uid ?? ''}::${src.labelField ?? ''}::${src.valueField ?? 'documentId'}`;
