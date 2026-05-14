@@ -25,7 +25,10 @@ export default {
       method: 'POST',
       path: '/:slug/submit',
       handler: 'public-form.submit',
-      config: { auth: false },
+      config: {
+        auth: false,
+        middlewares: ['plugin::forms.submit-rate-limit'],
+      },
     },
     {
       method: 'GET',

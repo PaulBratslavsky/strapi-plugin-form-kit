@@ -157,8 +157,8 @@ const service = ({ strapi }: { strapi: any } = { strapi: undefined }) => {
           continue;
         }
 
-        // Then run validation rules (minLength, maxLength, pattern, ...).
-        const ruleErrors = applyValidationRules(field, result.value);
+        // Then run validation rules (minLength, maxLength, pattern, matchField, ...).
+        const ruleErrors = applyValidationRules(field, result.value, args.data);
         if (ruleErrors.length > 0) {
           errs[field.id] = ruleErrors;
           continue;
@@ -238,7 +238,8 @@ const validateValueForType = (
 
 const applyValidationRules = (
   field: FieldLike,
-  value: unknown
+  value: unknown,
+  allData?: Record<string, unknown>
 ): string[] => {
   const errors: string[] = [];
   for (const rule of field.validations ?? []) {
@@ -285,6 +286,21 @@ const applyValidationRules = (
           errors.push(rule.message ?? 'Please enter a valid URL.');
         }
         break;
+      case 'matchField': {
+        // Cross-field equality — e.g. confirm-password / confirm-email.
+        // `allData` is the full submission payload; `rule.fieldId` is the
+        // id of the field whose value must match. We compare with `===`,
+        // so the two fields must produce comparable scalar types (both
+        // strings, both numbers, etc.) — which they typically do for the
+        // password/email confirm use case.
+        if (allData && (rule as any).fieldId) {
+          const other = allData[(rule as any).fieldId];
+          if (value !== other) {
+            errors.push((rule as any).message ?? 'Values do not match.');
+          }
+        }
+        break;
+      }
     }
   }
   return errors;

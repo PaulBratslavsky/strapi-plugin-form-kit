@@ -13,6 +13,13 @@ export const ValidationRule = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('pattern'), regex: z.string(), message: z.string().optional() }),
   z.object({ kind: z.literal('email'), message: z.string().optional() }),
   z.object({ kind: z.literal('url'), message: z.string().optional() }),
+  // Cross-field equality — e.g. "confirm password" or "confirm email". Stores
+  // the *id* of another field whose value must match.
+  z.object({
+    kind: z.literal('matchField'),
+    fieldId: z.string().uuid(),
+    message: z.string().optional(),
+  }),
 ]);
 
 export type ValidationRule = z.infer<typeof ValidationRule>;

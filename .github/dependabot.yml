@@ -1,0 +1,59 @@
+# Dependabot config — weekly dep updates across the monorepo.
+# Each workspace package gets its own ecosystem entry so updates land as
+# focused PRs (the plugin's updates don't mix with the embed's).
+#
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /packages/plugin
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      strapi:
+        patterns:
+          - '@strapi/*'
+      types:
+        patterns:
+          - '@types/*'
+      react:
+        patterns:
+          - 'react'
+          - 'react-dom'
+          - 'react-intl'
+          - 'react-router-dom'
+          - 'styled-components'
+    labels:
+      - dependencies
+      - plugin
+
+  - package-ecosystem: npm
+    directory: /packages/embed
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - embed
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - workspace-root
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - github-actions

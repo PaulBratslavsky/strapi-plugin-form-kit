@@ -1,0 +1,83 @@
+# Changelog
+
+All notable changes to **`strapi-plugin-form-kit`** are documented here. The format
+is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
+project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.3.0] — 2026-05-14
+### Added
+- **Per-IP rate limiting on `POST /api/forms/:slug/submit`**. Default 10
+  submissions per minute per (IP, slug) tuple. Configurable via plugin
+  config (`submitRateLimit.{enabled,windowMs,max}`) or env vars
+  (`STRAPI_FORMS_RATELIMIT_*`). Emits `X-RateLimit-*` and `Retry-After`
+  response headers; returns HTTP 429 when exceeded. Lives in
+  `server/src/middlewares/submit-rate-limit.ts`.
+- **`matchField` validation rule** for cross-field equality (confirm
+  password / confirm email). Stores the id of another field whose value
+  must match.
+- **AI test coverage** — 44 new tests across `normalize.test.ts`,
+  `parse.test.ts`, and `mock.test.ts`. Covers type aliases, label
+  derivation, validation building, choice option synthesis, fence
+  stripping, brace carving, named-color resolution, mock streaming.
+- **CHANGELOG.md** following the Keep a Changelog format.
+- **GitHub Actions release workflow** (`.github/workflows/release.yml`).
+  Tag-triggered (`v0.3.0`) or manual-dispatch publishes to npm.
+- **Dependabot config** (`.github/dependabot.yml`) — weekly grouped
+  updates per workspace package.
+
+## [0.2.1] — 2026-05-13
+### Fixed
+- Repository URLs in `package.json` now point at the canonical GitHub repo
+  (`strapi-plugin-form-kit`). Previous metadata 404'd from npm link-outs.
+
+## [0.2.0] — 2026-05-12
+### Added
+- **Collection-backed choice options** for `dropdown` / `radio` / `checkboxes`
+  fields. Toggle "From collection" in the field config, pick a Strapi content
+  type and label attribute. Server resolves options at `/schema` read time;
+  embed sees a normal `{ options: [{ label, value }] }` array.
+- New `GET /forms-plugin/admin/content-types` endpoint enumerates collection
+  types eligible for the picker, including each type's string attributes.
+- New `services/options-source-resolver.ts` walks a schema and substitutes
+  resolved options into fields. Soft-fails on lookup errors.
+
+## [0.1.1] — 2026-05-11
+### Fixed
+- **AI style colour validation is now permissive.** Small local models
+  (Ollama / gemma4) emit colour names outside our 19-name palette
+  ("navy", "darkblue", "light"). Previously the strict Zod enum rejected
+  these, the harness retried 3× with error feedback, and the user saw
+  `ollama produced invalid output after 3 attempts: backgroundColor: Invalid`.
+  Schema now accepts any string; normaliser silently drops unknowns.
+- Expanded `NAMED_COLORS` map with 25+ common CSS / Tailwind names and
+  modifier stripping ("soft-rose" → "rose").
+
+## [0.1.0] — 2026-05-11
+### Added
+- Initial public release as `strapi-plugin-form-kit`.
+- **Drag-and-drop form builder** in the Strapi admin (12 core field types,
+  registry for custom types from host projects).
+- **AI form builder** — describe a form in English; Claude / GPT / local
+  Ollama drafts it. BYOK, encrypted at rest. Streaming UI with live field
+  cards. Loose-schema harness so 8B-param models work reliably.
+- **Style mode** — visual customisation per form (4 themes, per-field
+  overrides, "I'm feeling lucky" random vibe picker, AI-driven styling).
+- **Submissions inbox** with filters, search, bulk actions, CSV export.
+- **Email notifications** with Liquid templates and per-form rules.
+- **Webhooks** with HMAC signing, retries (BullMQ when Redis is set; inline
+  fallback otherwise), and a delivery audit log.
+- **Three deploy shapes** for embedding: script tag, iframe, direct link.
+  All served by the plugin itself at `/api/forms/embed.js` and
+  `/api/forms/:slug/embed` — no separate npm package or CDN required.
+- **Headless API** — `GET /api/forms/:slug/schema` + `POST /api/forms/:slug/submit`.
+- **ETag-based schema revalidation** — republished forms reflect on the next
+  page load with no manual cache invalidation.
+
+[Unreleased]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/PaulBratslavsky/strapi-plugin-form-kit/releases/tag/v0.1.0
