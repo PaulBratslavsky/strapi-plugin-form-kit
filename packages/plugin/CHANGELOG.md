@@ -6,6 +6,30 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-05-15
+### Fixed
+- **Style AI can now darken input fields.** Added an `inputBackgroundColor`
+  vocabulary key wired to `--sf-input-bg` across the loose style schema,
+  normaliser, prompt, and both (admin + embed) theme resolvers. Prompts
+  like *"dark inputs, high-contrast text"* / *"make it dark mode"* now
+  darken the field boxes instead of leaving them the preset's light fill.
+
+### Changed
+- Internal decomposition pass (no behavior change): split the monolithic
+  `admin/src/api.ts` into a per-domain `api/` module, extracted
+  `FormBuilder` styled-components, split the `public-form` controller into
+  `public-form` + `public-embed` with a shared `form-lookup` helper, and
+  exported `resolveOneOptionSource` for direct reuse.
+- Added vitest coverage for `retry`, `sse`, and `options-source-resolver`
+  (19 tests; suite now 86).
+
+### Documentation
+- Documented collection-backed options (`optionsSource`) in the form
+  schema reference, AI builder guide, and getting-started.
+- Added a `docs/` index; README now links docs via absolute URLs (so
+  they resolve on npmjs.com) and carries an early-alpha notice +
+  Contributing section.
+
 ## [0.4.0] — 2026-05-14
 ### Added
 - **AI is now aware of available collections.** The system prompt advertises

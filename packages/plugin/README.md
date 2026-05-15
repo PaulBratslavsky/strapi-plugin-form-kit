@@ -7,6 +7,12 @@ notifications, webhooks, and a self-hosted embed runtime.
 [![npm](https://img.shields.io/npm/v/strapi-plugin-form-kit.svg)](https://www.npmjs.com/package/strapi-plugin-form-kit)
 [![license](https://img.shields.io/npm/l/strapi-plugin-form-kit.svg)](./LICENSE)
 
+> ⚠️ **Early alpha.** This plugin is under active development and is
+> **not yet recommended for production use** — APIs, schema, and admin UX
+> may change between releases without a migration path. Try it, kick the
+> tires, file issues. **Contributions are very welcome** — see
+> [Contributing](#contributing).
+
 ---
 
 ## What you get
@@ -196,22 +202,22 @@ strapi.plugin('forms').service('fieldRegistry').register({
 });
 ```
 
-See the full recipe in [`docs/custom-field-types.md`](../../docs/custom-field-types.md).
+See the full recipe in [`docs/custom-field-types.md`](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/custom-field-types.md).
 
 ---
 
 ## Documentation
 
-Full docs in the [`docs/`](../../docs/) folder:
+**[Browse the full documentation →](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/README.md)**
 
-- [Getting started](../../docs/getting-started.md)
-- [AI builder](../../docs/ai-builder.md)
-- [Embed snippet](../../docs/embed-snippet.md)
-- [Form schema reference](../../docs/form-schema.md)
-- [Custom field types](../../docs/custom-field-types.md)
-- [Notifications](../../docs/notifications.md)
-- [Webhooks](../../docs/webhooks.md)
-- [Permissions](../../docs/permissions.md)
+- [Getting started](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/getting-started.md)
+- [AI builder](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/ai-builder.md)
+- [Embed snippet](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/embed-snippet.md)
+- [Form schema reference](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/form-schema.md)
+- [Custom field types](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/custom-field-types.md)
+- [Notifications](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/notifications.md)
+- [Webhooks](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/webhooks.md)
+- [Permissions](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/permissions.md)
 
 ---
 
@@ -220,6 +226,24 @@ Full docs in the [`docs/`](../../docs/) folder:
 The plugin never sends form data anywhere except your own Strapi instance.
 The AI is only called when you explicitly invoke it, and only sees the
 prompts you type — never submission data. API keys are encrypted at rest.
+
+---
+
+## Contributing
+
+This is an early-alpha project and contributions are very welcome —
+issues, bug reports, and PRs all help.
+
+- **Found a bug / have an idea?** Open an issue:
+  [github.com/PaulBratslavsky/strapi-plugin-form-kit/issues](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/issues)
+- **Local dev:** clone the monorepo, then `./scripts/start.sh` boots a
+  test Strapi app with the plugin linked at `http://localhost:1337/admin`
+  (`--watch` rebuilds the plugin on save).
+- **Tests:** `pnpm -F strapi-plugin-form-kit test` (vitest, server-side).
+  Please add coverage for behavior changes.
+- Since the plugin is pre-1.0, expect APIs and schema to move. Discuss
+  larger changes in an issue first so we can keep the form-schema
+  contract coherent.
 
 ---
 
