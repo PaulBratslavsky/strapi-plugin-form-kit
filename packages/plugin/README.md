@@ -229,6 +229,24 @@ prompts you type — never submission data. API keys are encrypted at rest.
 
 ---
 
+## Contributing
+
+This is an early-alpha project and contributions are very welcome —
+issues, bug reports, and PRs all help.
+
+- **Found a bug / have an idea?** Open an issue:
+  [github.com/PaulBratslavsky/strapi-plugin-form-kit/issues](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/issues)
+- **Local dev:** clone the monorepo, then `./scripts/start.sh` boots a
+  test Strapi app with the plugin linked at `http://localhost:1337/admin`
+  (`--watch` rebuilds the plugin on save).
+- **Tests:** `pnpm -F strapi-plugin-form-kit test` (vitest, server-side).
+  Please add coverage for behavior changes.
+- Since the plugin is pre-1.0, expect APIs and schema to move. Discuss
+  larger changes in an issue first so we can keep the form-schema
+  contract coherent.
+
+---
+
 ## License
 
 MIT © Paul Bratslavsky. See [LICENSE](./LICENSE).
