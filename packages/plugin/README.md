@@ -7,6 +7,12 @@ notifications, webhooks, and a self-hosted embed runtime.
 [![npm](https://img.shields.io/npm/v/strapi-plugin-form-kit.svg)](https://www.npmjs.com/package/strapi-plugin-form-kit)
 [![license](https://img.shields.io/npm/l/strapi-plugin-form-kit.svg)](./LICENSE)
 
+> ⚠️ **Early alpha.** This plugin is under active development and is
+> **not yet recommended for production use** — APIs, schema, and admin UX
+> may change between releases without a migration path. Try it, kick the
+> tires, file issues. **Contributions are very welcome** — see
+> [Contributing](#contributing).
+
 ---
 
 ## What you get
