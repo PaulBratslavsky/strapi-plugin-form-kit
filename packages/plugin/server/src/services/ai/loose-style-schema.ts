@@ -28,6 +28,10 @@ export const LooseStyleSchema = z
     primaryColor: ColorValue.optional(),
     backgroundColor: ColorValue.optional(),
     textColor: ColorValue.optional(),
+    // The form-field input box background (separate from the form
+    // backgroundColor). Needed for dark-mode requests — without it the
+    // inputs keep the preset's white bg while the form goes dark.
+    inputBackgroundColor: ColorValue.optional(),
     borderRadius: z.enum(['none', 'sm', 'md', 'lg', 'pill']).optional(),
     fontFamily: z.enum(['system', 'sans', 'serif', 'mono']).optional(),
     fontScale: z.enum(['sm', 'md', 'lg']).optional(),

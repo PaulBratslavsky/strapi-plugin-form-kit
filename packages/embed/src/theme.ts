@@ -182,6 +182,7 @@ export const resolveTheme = (theme: ThemeConfig | undefined): Record<string, str
   }
   if (theme?.backgroundColor) overrides['--sf-bg'] = theme.backgroundColor;
   if (theme?.textColor) overrides['--sf-text'] = theme.textColor;
+  if (theme?.inputBackgroundColor) overrides['--sf-input-bg'] = theme.inputBackgroundColor;
   if (theme?.borderRadius)
     overrides['--sf-radius'] = RADIUS[theme.borderRadius as keyof typeof RADIUS];
 

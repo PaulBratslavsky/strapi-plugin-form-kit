@@ -104,8 +104,9 @@ Shape:
 {
   "preset": "clean" | "editorial" | "friendly" | "bold",
   "primaryColor": "<hex like #4945ff OR a named color>",
-  "backgroundColor": "<hex OR named>",
-  "textColor": "<hex OR named>",
+  "backgroundColor": "<hex OR named — the FORM's background>",
+  "textColor": "<hex OR named — label + input TEXT color>",
+  "inputBackgroundColor": "<hex OR named — the input BOX background; set this for dark mode or the input boxes stay their preset color>",
   "borderRadius": "none" | "sm" | "md" | "lg" | "pill",
   "fontFamily": "system" | "sans" | "serif" | "mono",
   "fontScale": "sm" | "md" | "lg",
@@ -125,7 +126,8 @@ graphite, cream, pearl, midnight, forest, sky, sunset, lime, gold, silver,
 black, white. For anything else, emit a 6-digit hex like "#0a0a14".
 
 Example transformations:
-- "dark theme"           → { "backgroundColor": "midnight", "textColor": "white", "preset": "bold" }
+- "dark theme"           → { "backgroundColor": "midnight", "inputBackgroundColor": "#1a1f2e", "textColor": "white", "preset": "bold" }
+- "dark input fields, high-contrast text" → { "inputBackgroundColor": "#111827", "textColor": "white" }
 - "more friendly"        → { "preset": "friendly", "borderRadius": "lg" }
 - "newspapery"           → { "preset": "editorial", "fontFamily": "serif", "fieldSpacing": "relaxed" }
 - "match Stripe"         → { "preset": "clean", "primaryColor": "indigo", "borderRadius": "sm" }

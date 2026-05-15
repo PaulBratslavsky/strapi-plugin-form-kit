@@ -253,6 +253,28 @@ Feed the rollup data to the AI provider. AI generates plain-English observations
 
 **Why fifth**: requires v1.1 + v1.2 data to be meaningful. Big differentiator once it lands.
 
+> **Architectural prerequisite — build the AI skills framework first.**
+> Today the AI layer has two parallel pipelines (layout, style), each a
+> hand-maintained trio of loose-schema + prompt + normalize spread across
+> ~3 files, plus a `target` flag the orchestrator branches on. Adding a
+> *third* AI capability (insights) this way means a third parallel
+> pipeline + a third mode flag — the same "build the new feature on top of
+> the debt" trap we hit with the FormBuilder god-component.
+>
+> Before v1.5, refactor to the `AiSkill` registry from the architecture
+> review: each capability (`FormLayoutSkill`, `FormStyleSkill`,
+> `FormInsightsSkill`) is one cohesive unit declaring its `inputSchema`,
+> `buildPrompt`, `normalize`, and `apply`. The orchestrator dispatches to
+> registered skills instead of branching on a flag. ~2–3 hours. This is
+> the natural seam and v1.5 is its forcing function — same reasoning as
+> "decompose the god-files before building analytics on them."
+>
+> Note: this is *orthogonal* to the shared-theme-module refactor
+> (architecture audit candidate #1+#2). Skills consolidate the AI-facing
+> schema/prompt/normalize; the theme-module refactor de-duplicates the
+> two render-surface resolvers + ThemeConfig types. Both are worth doing;
+> neither blocks the other.
+
 ### v1.6 — Predicted completion rate at publish-time (4–6 hours)
 
 When a form is published, the AI estimates likely completion rate based on field count, types, validation strictness, and historical patterns across the user's other forms. Surfaces as "Predicted: 68% completion. Risky fields: Severity (long), Steps to Reproduce (long-text required)."

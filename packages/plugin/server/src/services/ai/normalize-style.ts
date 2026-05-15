@@ -95,6 +95,8 @@ export const looseToTheme = (loose: LooseStyleInput) => {
   if (background) out.backgroundColor = background;
   const text = resolveColor(loose.textColor);
   if (text) out.textColor = text;
+  const inputBg = resolveColor(loose.inputBackgroundColor);
+  if (inputBg) out.inputBackgroundColor = inputBg;
 
   // Pass-through enums (already validated by LooseStyleSchema).
   for (const key of [

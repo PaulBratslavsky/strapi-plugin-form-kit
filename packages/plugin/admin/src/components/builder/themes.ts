@@ -29,6 +29,7 @@ export type ThemeConfig = {
   primaryColor?: string;
   backgroundColor?: string;
   textColor?: string;
+  inputBackgroundColor?: string;
   // Layout overrides
   borderRadius?: BorderRadius;
   fontFamily?: FontFamily | string;
@@ -279,6 +280,7 @@ export const resolveTheme = (theme: ThemeConfig | undefined): Record<string, str
   }
   if (theme?.backgroundColor) overrides['--sf-bg'] = theme.backgroundColor;
   if (theme?.textColor) overrides['--sf-text'] = theme.textColor;
+  if (theme?.inputBackgroundColor) overrides['--sf-input-bg'] = theme.inputBackgroundColor;
 
   // Radius
   if (theme?.borderRadius) overrides['--sf-radius'] = RADIUS[theme.borderRadius];

@@ -68,6 +68,7 @@ export type ThemeConfig = {
   primaryColor?: string;
   backgroundColor?: string;
   textColor?: string;
+  inputBackgroundColor?: string;
   borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'pill';
   fontFamily?: 'system' | 'sans' | 'serif' | 'mono' | string;
   fontScale?: 'sm' | 'md' | 'lg';
