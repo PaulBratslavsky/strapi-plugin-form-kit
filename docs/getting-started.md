@@ -53,6 +53,19 @@ Full details: [ai-builder.md](ai-builder.md).
 5. Switch to **Style** mode to tweak the visual theme. Click **I'm feeling lucky** to roll a random vibe, or open the AI drawer again — in Style mode it generates themes from prose ("make it dark", "more friendly", "newspapery").
 6. Click **Save & publish**.
 
+### Collection-backed dropdowns
+
+A `dropdown`, `radio`, or `checkboxes` field can pull its choices from an
+existing Strapi collection instead of typing options by hand. In the
+field's config, switch its options to **From a collection**, pick the
+collection, and choose which attribute is the label (the submitted value
+defaults to the stable `documentId`). The list resolves live at request
+time, so it always reflects current data — no rebuild when rows change.
+
+Faster still: just ask the AI ("an event picker from our Events
+collection"). Full details in
+[form-schema.md](form-schema.md#collection-backed-options-optionssource).
+
 ## 4. Test the public endpoint
 
 ```bash

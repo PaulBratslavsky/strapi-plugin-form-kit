@@ -50,12 +50,57 @@ type FieldBase = {
 | `number` | `step?: number` | number |
 | `phone` | — | string |
 | `url` | — | string (validated as http(s) URL) |
-| `dropdown` | `options: { label, value }[]` | string |
-| `radio` | `options: { label, value }[]` | string |
-| `checkboxes` | `options: { label, value }[]` | array of strings |
+| `dropdown` | `options[]` **or** `optionsSource` (see below) | string |
+| `radio` | `options[]` **or** `optionsSource` (see below) | string |
+| `checkboxes` | `options[]` **or** `optionsSource` (see below) | array of strings |
 | `date` | `min?: string`, `max?: string` (ISO) | string |
 | `hidden` | `defaultValue: string` (required) | string |
 | `content` | `html: string` | not user input — presentational |
+
+### Collection-backed options (`optionsSource`)
+
+`dropdown`, `radio`, and `checkboxes` can derive their choices from an
+existing Strapi collection instead of hand-written `options`. Set
+`optionsSource` on the field:
+
+```typescript
+type OptionsSource = {
+  kind: 'collection';
+  uid: string;          // collection UID, e.g. "api::product.product"
+  labelField: string;   // attribute shown to the user, e.g. "title"
+  valueField: string;   // attribute submitted (default "documentId")
+};
+```
+
+```jsonc
+{
+  "type": "dropdown",
+  "id": "…",
+  "label": "Event",
+  "optionsSource": {
+    "kind": "collection",
+    "uid": "api::event.event",
+    "labelField": "title"
+  }
+}
+```
+
+- **Additive, not exclusive.** Static `options` still works exactly as
+  before. A field uses `optionsSource` only when it's present.
+- **Resolved at read time.** `GET /api/forms/:slug/schema` queries the
+  referenced collection and projects each row to `{ label, value }`,
+  substituting into `options` before the response is sent. The embed and
+  submit endpoint both see the resolved list, so choices stay in sync
+  with your data with no rebuild.
+- **`valueField` defaults to `documentId`** — the stable, D&P-safe
+  identifier. Override it only if you need a different attribute as the
+  submitted value.
+- Drafts may have neither `options` nor `optionsSource` while you're
+  mid-edit; publish-time validation enforces that a choice field has one
+  or the other.
+
+The AI builder can set this up for you — see
+[ai-builder.md](ai-builder.md#pointing-fields-at-your-collections).
 
 ### `validations`
 

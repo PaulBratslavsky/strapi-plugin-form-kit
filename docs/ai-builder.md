@@ -59,6 +59,24 @@ Same button, different system prompt. Try:
 The whole schema is rewritten each time — undo (`Cmd+Z`) won't reach
 before the AI applied. We're working on history-preserving refines.
 
+## Pointing fields at your collections
+
+The AI knows about your Strapi collections. When a prompt references one,
+it generates a choice field backed by `optionsSource` instead of
+hand-written options — so the choices stay in sync with your data:
+
+- "Add an event picker from our Events collection."
+- "Let them choose a product (dropdown)."
+- "Department radio buttons from the Departments collection."
+
+It picks a sensible `labelField` (the first reasonable name/title
+attribute) and leaves `valueField` as `documentId` unless you ask for a
+different identifier. You can also wire this up by hand — see
+[form-schema.md](form-schema.md#collection-backed-options-optionssource).
+
+Only collections with at least one text attribute are offered to the
+model; the field falls back to `documentId` for the label if none exist.
+
 ## Styling with AI
 
 Switch to **Style** mode and the AI drawer changes its system prompt to
@@ -79,6 +97,13 @@ The AI is constrained to a small vocabulary: 4 preset themes
 (`indigo` / `rose` / `midnight` / `lime` / ...), and enumerated values for
 radius, font family, spacing, button style, etc. It can't return broken
 CSS — worst case it picks the wrong vibe, and you re-prompt.
+
+Colors are addressable independently: the form background
+(`backgroundColor`), the label/input **text** (`textColor`), and the
+input-box background (`inputBackgroundColor`). The last one matters for
+dark mode — without it the input boxes keep the preset's light fill, so
+"dark inputs, high-contrast text" or "make it dark mode" now darkens the
+fields too, not just the page.
 
 ## "I'm feeling lucky"
 

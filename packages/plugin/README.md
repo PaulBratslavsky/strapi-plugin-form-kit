@@ -196,22 +196,22 @@ strapi.plugin('forms').service('fieldRegistry').register({
 });
 ```
 
-See the full recipe in [`docs/custom-field-types.md`](../../docs/custom-field-types.md).
+See the full recipe in [`docs/custom-field-types.md`](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/custom-field-types.md).
 
 ---
 
 ## Documentation
 
-Full docs in the [`docs/`](../../docs/) folder:
+**[Browse the full documentation →](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/README.md)**
 
-- [Getting started](../../docs/getting-started.md)
-- [AI builder](../../docs/ai-builder.md)
-- [Embed snippet](../../docs/embed-snippet.md)
-- [Form schema reference](../../docs/form-schema.md)
-- [Custom field types](../../docs/custom-field-types.md)
-- [Notifications](../../docs/notifications.md)
-- [Webhooks](../../docs/webhooks.md)
-- [Permissions](../../docs/permissions.md)
+- [Getting started](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/getting-started.md)
+- [AI builder](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/ai-builder.md)
+- [Embed snippet](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/embed-snippet.md)
+- [Form schema reference](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/form-schema.md)
+- [Custom field types](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/custom-field-types.md)
+- [Notifications](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/notifications.md)
+- [Webhooks](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/webhooks.md)
+- [Permissions](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/permissions.md)
 
 ---
 
