@@ -12,7 +12,7 @@ export default {
     {
       method: 'GET',
       path: '/embed.js',
-      handler: 'public-form.serveEmbedJs',
+      handler: 'public-embed.serveEmbedJs',
       config: { auth: false },
     },
     {
@@ -33,7 +33,7 @@ export default {
     {
       method: 'GET',
       path: '/:slug/embed',
-      handler: 'public-form.serveEmbedPage',
+      handler: 'public-embed.serveEmbedPage',
       config: { auth: false },
     },
   ],

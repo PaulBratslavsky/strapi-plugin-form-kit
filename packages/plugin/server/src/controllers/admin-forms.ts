@@ -1,5 +1,6 @@
 import { errors } from '@strapi/utils';
 import type { Core } from '@strapi/strapi';
+import { resolveOneOptionSource } from '../services/options-source-resolver';
 
 const { NotFoundError, ValidationError } = errors;
 
@@ -203,13 +204,13 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       ctx.body = { data: [] };
       return;
     }
-    const { resolveOptionsSources } = await import(
-      '../services/options-source-resolver'
-    );
-    const resolved = await resolveOptionsSources(strapi, {
-      fields: [{ type: 'dropdown', optionsSource: { kind: 'collection', uid, labelField, valueField } }],
-    } as any);
-    ctx.body = { data: (resolved as any)?.fields?.[0]?.options ?? [] };
+    const options = await resolveOneOptionSource(strapi, {
+      kind: 'collection',
+      uid,
+      labelField,
+      valueField,
+    });
+    ctx.body = { data: options };
   },
 
   /** GET /forms-plugin/admin/field-types — list registered field types for the builder palette. */

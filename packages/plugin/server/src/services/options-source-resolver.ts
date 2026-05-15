@@ -43,7 +43,7 @@ export const resolveOptionsSources = async (
   const resolvedFields = await Promise.all(
     schema.fields.map(async (field) => {
       if (!isResolvableChoiceField(field)) return field;
-      const resolved = await resolveOne(strapi, field.optionsSource!);
+      const resolved = await resolveOneOptionSource(strapi, field.optionsSource!);
       return { ...field, options: resolved };
     })
   );
@@ -59,7 +59,13 @@ const isResolvableChoiceField = (f: any): f is ChoiceField & { optionsSource: Op
   typeof f.optionsSource.uid === 'string' &&
   typeof f.optionsSource.labelField === 'string';
 
-const resolveOne = async (
+/**
+ * Resolve a single optionsSource to its `{ label, value }` rows. Exported
+ * so the admin "resolve this source on demand" endpoint (powering the
+ * Preview & test modal) can call it directly without wrapping a fake
+ * one-field schema. `resolveOptionsSources` (whole-schema) delegates here.
+ */
+export const resolveOneOptionSource = async (
   strapi: Core.Strapi,
   src: OptionsSource
 ): Promise<Array<{ label: string; value: string }>> => {
