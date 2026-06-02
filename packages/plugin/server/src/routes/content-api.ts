@@ -36,5 +36,14 @@ export default {
       handler: 'public-embed.serveEmbedPage',
       config: { auth: false },
     },
+    {
+      method: 'POST',
+      path: '/:slug/events',
+      handler: 'public-analytics.track',
+      config: {
+        auth: false,
+        middlewares: ['plugin::forms.analytics-events-rate-limit'],
+      },
+    },
   ],
 };
