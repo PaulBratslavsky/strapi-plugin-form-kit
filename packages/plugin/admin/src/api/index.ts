@@ -13,12 +13,15 @@ export { useSubmissionsApi } from './submissions';
 export { useNotificationsApi } from './notifications';
 export { useWebhooksApi } from './webhooks';
 export { useAiApi } from './ai';
+export { useAnalyticsApi } from './analytics';
+export type { AnalyticsReport, AnalyticsRange } from './analytics';
 
 import { useFormsCrudApi } from './forms';
 import { useSubmissionsApi } from './submissions';
 import { useNotificationsApi } from './notifications';
 import { useWebhooksApi } from './webhooks';
 import { useAiApi } from './ai';
+import { useAnalyticsApi } from './analytics';
 
 export const useFormsApi = () => ({
   ...useFormsCrudApi(),
@@ -26,4 +29,5 @@ export const useFormsApi = () => ({
   ...useNotificationsApi(),
   ...useWebhooksApi(),
   ...useAiApi(),
+  ...useAnalyticsApi(),
 });

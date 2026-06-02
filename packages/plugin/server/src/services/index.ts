@@ -3,6 +3,7 @@ import formSchemaValidator from './form-schema-validator';
 import webhookDispatcher from './webhook-dispatcher/index';
 import notificationDispatcher from './notification-dispatcher';
 import ai from './ai/index';
+import analytics from './analytics/index';
 
 export default {
   fieldRegistry,
@@ -10,4 +11,5 @@ export default {
   webhookDispatcher,
   notificationDispatcher,
   ai,
+  analytics,
 };

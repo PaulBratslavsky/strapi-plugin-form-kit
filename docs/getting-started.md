@@ -126,5 +126,6 @@ If you rename a slug, the **Script** and **Iframe** snippets use the form's stab
 - **Email notifications** when a submission arrives — see [notifications.md](notifications.md).
 - **Webhooks** to forward submissions to other services — see [webhooks.md](webhooks.md).
 - **Custom field types** — register your own renderers from a host project; see [custom-field-types.md](custom-field-types.md).
+- **Analytics** — the cookieless funnel + per-field drop-off dashboard; see [analytics.md](analytics.md).
 - **Permissions** + client handoff recipe — see [permissions.md](permissions.md).
 - **AI form builder** — full setup, model recommendations, troubleshooting; see [ai-builder.md](ai-builder.md).

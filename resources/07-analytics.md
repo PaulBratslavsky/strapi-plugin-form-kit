@@ -4,8 +4,9 @@ Captures the research, architectural decisions, and scope phasing for the
 form analytics dashboard. v1 ships the universal funnel; everything else
 is roadmap.
 
-> **Status**: planning. v1 implementation pending sign-off on the
-> "Decisions" section. Spec drafted 2026-05-14.
+> **Status**: v1 implementation in progress (`feat/analytics-v1`). Decisions
+> §7 signed off 2026-06-01; open questions §9 resolved (see inline). Spec
+> drafted 2026-05-14.
 
 ---
 
@@ -212,10 +213,21 @@ Rough effort: 6–8 hours of focused work.
 | 1 | v1 scope | Universal funnel only | Differentiators benefit from real data flowing first |
 | 2 | Raw event retention | 30 days | Matches Tally; small footprint |
 | 3 | Session strategy | `sessionStorage` UUID (client) + daily-salted hashed IP (server unique counts) | Cookieless but accurate uniques |
-| 4 | Rollup cadence | 5-min batch via BullMQ when Redis set; nightly inline otherwise | Mirrors webhook-dispatcher precedent |
+| 4 | Rollup cadence | 5-min `setInterval` tick, all deployments (v1) | See note below — BullMQ deferred |
 | 5 | Dashboard placement | "Analytics" tab on each form (in the FormBuilder header) | Avoid a separate page until there's demand |
 | 6 | Per-form opt-out | `settings.analytics.enabled` boolean (default `true`) | GDPR-strict forms can disable per-form |
 | 7 | Submission counting | Query existing submissions table for the numerator | One source of truth; no double-counting |
+
+> **Implementation note on #4 (rollup cadence).** v1 shipped a process-local
+> `setInterval` tick for *all* deployments, not BullMQ-when-Redis. Rationale:
+> rollups upsert on `(form_document_id, day)` and are fully idempotent, so a
+> second Strapi instance running its own tick converges to identical rows —
+> worst case is duplicated compute, never wrong data. And the read path
+> computes the unsealed tail (today) live regardless, so the dashboard is
+> correct even if a tick is late or hasn't run. This kept v1 surface area
+> small. Moving rollup scheduling onto BullMQ to *dedupe* that compute in
+> horizontally-scaled deployments is a clean follow-up that doesn't affect
+> correctness. The scheduler lives behind `services/analytics/index.ts#init`.
 
 ---
 
@@ -310,17 +322,28 @@ Server-Sent Events stream to the analytics tab. Last 10 submissions appear in a 
 
 ## 9. Open questions
 
-To resolve before v1 build:
+Resolved at v1 sign-off (2026-06-01):
 
-1. **Are we OK with the rate-limit middleware also gating the analytics ingest endpoint?** Currently it's slug-keyed; we'd need to add a `events` path-key or write a separate (more permissive) limit.
+1. **Rate-limit middleware gating analytics ingest?** → **Separate, looser
+   limit.** A dedicated `analytics-events` rate-limit middleware keyed per
+   (IP, formId) with a generous budget (~100/min, env-overridable), plus the
+   per-session hard cap (§4) and optional sampling. The submit endpoint's
+   strict 10/min limit is left untouched.
 
-2. **What does the embed do if `sendBeacon` fails?** Drop silently (most do)? Buffer + retry on next page? My default: drop. Analytics is best-effort.
+2. **What does the embed do if `sendBeacon` fails?** → **Drop silently.**
+   Analytics is best-effort; no buffering or retry.
 
-3. **Should `field_change` debounce/throttle?** A user typing in a textarea triggers `change` constantly. Tally fires on blur only. My default: fire on blur, plus a 5-second-idle timer for the final field they were in when they navigated away.
+3. **Should `field_change` debounce/throttle?** → **Fire on blur**, plus a
+   5-second-idle flush for the field the user was last in when they navigate
+   away.
 
-4. **Does the existing form `documentId | slug` lookup pattern extend to events?** Probably yes — embed sends whichever it has (matches the embed snippet's data attribute).
+4. **Does the `documentId | slug` lookup extend to events?** → **Yes.** The
+   ingest endpoint resolves the form by documentId or slug, same as the embed
+   data attribute and the submit endpoint.
 
-5. **Do we count the admin's own previews / "Send real submission" toggle as events?** No — they should be filtered out by passing a flag in the request from the admin. Otherwise the dashboard double-counts the form author.
+5. **Do we count the admin's own previews as events?** → **No.** The admin
+   preview passes a flag suppressing event emission, so the form author isn't
+   double-counted.
 
 ---
 

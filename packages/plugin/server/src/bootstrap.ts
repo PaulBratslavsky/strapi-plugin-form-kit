@@ -11,6 +11,10 @@ const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
   // 2. Pick the webhook dispatcher implementation based on env.
   const webhookDispatcher = strapi.plugin('forms').service('webhookDispatcher');
   await webhookDispatcher.init?.();
+
+  // 3. Start the analytics rollup scheduler (no-op if analytics is disabled).
+  const analytics = strapi.plugin('forms').service('analytics');
+  await analytics.init?.();
 };
 
 export default bootstrap;

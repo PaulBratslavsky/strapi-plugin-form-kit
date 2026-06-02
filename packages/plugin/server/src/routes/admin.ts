@@ -216,5 +216,18 @@ export default {
       handler: 'admin-ai.updateConfig',
       config: { policies: adminPolicy },
     },
+    // ---- Analytics (M12) ----
+    {
+      method: 'GET',
+      path: '/admin/forms/:formDocumentId/analytics',
+      handler: 'admin-analytics.report',
+      config: { policies: adminPolicy },
+    },
+    {
+      method: 'GET',
+      path: '/admin/forms/:formDocumentId/analytics/export.csv',
+      handler: 'admin-analytics.exportCsv',
+      config: { policies: adminPolicy },
+    },
   ],
 };

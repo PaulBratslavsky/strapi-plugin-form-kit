@@ -73,6 +73,9 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     const body = ctx.request.body ?? {};
     const data = (body.data ?? {}) as Record<string, unknown>;
     const honeypot = body.honeypot;
+    // Analytics session id — lets the rollup join this submission to its event
+    // session for completion-rate and time-to-complete. Optional and best-effort.
+    const sessionId = typeof body.sessionId === 'string' ? body.sessionId.slice(0, 64) : null;
 
     const form = await findPublishedFormByIdOrSlug(strapi, idOrSlug);
     if (!form) {
@@ -95,6 +98,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       referrer: ctx.request.headers.referer ?? ctx.request.headers.referrer ?? null,
       submittedAt: new Date().toISOString(),
       formSchemaVersion: form.schema?.schemaVersion ?? 1,
+      ...(sessionId ? { sessionId } : {}),
     };
 
     // Honeypot path: persist as spam, return success regardless (so bots can't probe).

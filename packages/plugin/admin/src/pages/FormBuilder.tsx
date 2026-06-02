@@ -325,6 +325,9 @@ export const FormBuilder = () => {
               AI
             </Button>
             <CopyAiPromptButton documentId={documentId} />
+            <Button variant="tertiary" onClick={() => navigate('./analytics')}>
+              Analytics
+            </Button>
             <Button variant="tertiary" onClick={() => navigate('./notifications')}>
               Notifications
             </Button>

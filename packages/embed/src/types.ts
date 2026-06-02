@@ -138,6 +138,14 @@ export type FieldRenderer = (args: {
   initialValue: unknown;
 }) => void;
 
+/** Embed-fired analytics events (see resources/07-analytics.md §3). */
+export type AnalyticsEventType =
+  | 'view'
+  | 'start'
+  | 'field_change'
+  | 'field_error'
+  | 'submit_attempt';
+
 export type RenderFormOptions = {
   target: HTMLElement;
   baseUrl: string;
@@ -146,6 +154,11 @@ export type RenderFormOptions = {
   fieldRenderers?: Record<string, FieldRenderer>;
   /** Override schema fetching for tests / custom flows. */
   preloadedSchema?: FetchedSchema;
+  /**
+   * Suppress analytics event reporting. Set by the admin preview so the form
+   * author isn't counted, and available to hosts that want it off.
+   */
+  disableAnalytics?: boolean;
 };
 
 export type RenderFormHandle = {
