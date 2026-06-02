@@ -171,6 +171,8 @@ export const FormPreview = ({
       baseUrl:
         publicSubmitUrl ? new URL(publicSubmitUrl).origin : window.location.origin,
       slug: 'preview',
+      // Never count the form author's own preview interactions.
+      disableAnalytics: true,
       preloadedSchema: {
         schemaVersion: 1,
         formId: 'preview',
