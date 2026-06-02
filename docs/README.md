@@ -29,6 +29,12 @@ build your first form, embed it.
 - **[Webhooks](webhooks.md)** — forward submissions to other services.
 - **[Permissions](permissions.md)** — who can do what.
 
+## Measure
+
+- **[Analytics](analytics.md)** — the cookieless, self-hosted funnel: views →
+  starts → submissions, per-field drop-off, and what's collected (and what
+  isn't) for your privacy policy.
+
 ## Extend
 
 - **[Custom field types](custom-field-types.md)** — register your own

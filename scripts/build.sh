@@ -64,8 +64,8 @@ fi
 
 # --- plugin ------------------------------------------------------------------
 if [ "$BUILD_PLUGIN" = "1" ]; then
-  step "Building strapi-plugin-forms"
-  pnpm --filter strapi-plugin-forms build
+  step "Building strapi-plugin-form-kit"
+  pnpm --filter strapi-plugin-form-kit build
   if [ -d packages/plugin/dist ]; then
     SIZE=$(du -sh packages/plugin/dist 2>/dev/null | awk '{print $1}')
     ok "plugin dist/ built (${SIZE})"

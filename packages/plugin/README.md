@@ -22,6 +22,7 @@ notifications, webhooks, and a self-hosted embed runtime.
 - **Style mode** — visual theming per form (4 presets, per-field overrides, "I'm feeling lucky" random vibe picker, AI-driven styling). The admin preview renders the *actual* embed runtime, so it's pixel-identical to production.
 - **Collection-backed dropdowns** — point a dropdown / radio / checkboxes field at any Strapi collection; options resolve server-side at request time. No public read access required.
 - **Submissions inbox** — filters, search, bulk actions, per-status counts, CSV export.
+- **Analytics** — a cookieless, self-hosted funnel per form (views → starts → submissions), per-field drop-off, and a 30-day trend. No PII, no third-party trackers; respects Do-Not-Track / GPC.
 - **Email notifications** — Liquid templates, per-form rules, delivery audit log.
 - **Webhooks** — HMAC signing, retries (BullMQ when Redis is set; inline fallback otherwise), delivery log.
 - **Three deploy shapes** — script tag, iframe, or shareable hosted link. All served by the plugin itself; no separate package or CDN.
@@ -170,6 +171,11 @@ internal service call. Only published entries are included. Max 200 rows.
 | `STRAPI_FORMS_RATELIMIT_ENABLED` | `true` | Toggle submit rate limiting |
 | `STRAPI_FORMS_RATELIMIT_WINDOW_MS` | `60000` | Rate-limit window |
 | `STRAPI_FORMS_RATELIMIT_MAX` | `10` | Max submits per window per (IP, slug) |
+| `STRAPI_FORMS_ANALYTICS_ENABLED` | `true` | Toggle form analytics (events + rollups) |
+| `STRAPI_FORMS_ANALYTICS_RETENTION_DAYS` | `30` | How long raw analytics events are kept |
+| `STRAPI_FORMS_ANALYTICS_SALT` | _(random)_ | Stable salt for daily IP hashing across restarts |
+| `STRAPI_FORMS_ANALYTICS_ANONYMIZE_IPS_FULLY` | `false` | Skip IP hashing entirely (view counts only) |
+| `STRAPI_FORMS_ANALYTICS_RATELIMIT_MAX` | `100` | Max analytics events per minute per (IP, form) |
 
 ---
 
@@ -181,6 +187,7 @@ internal service call. Only published entries are included. Max 200 rows.
 | `POST` | `/api/forms/:slug/submit` | Submit. Body: `{ data: { fieldId: value }, honeypot: "" }` |
 | `GET` | `/api/forms/embed.js` | The embed runtime bundle |
 | `GET` | `/api/forms/:slug/embed` | Standalone HTML page (iframe / direct link) |
+| `POST` | `/api/forms/:slug/events` | Analytics event ingest (the embed posts here via `sendBeacon`) |
 
 `:slug` accepts a slug **or** a `documentId`.
 
@@ -217,6 +224,7 @@ See the full recipe in [`docs/custom-field-types.md`](https://github.com/PaulBra
 - [Custom field types](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/custom-field-types.md)
 - [Notifications](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/notifications.md)
 - [Webhooks](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/webhooks.md)
+- [Analytics](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/analytics.md)
 - [Permissions](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/permissions.md)
 
 ---
@@ -226,6 +234,11 @@ See the full recipe in [`docs/custom-field-types.md`](https://github.com/PaulBra
 The plugin never sends form data anywhere except your own Strapi instance.
 The AI is only called when you explicitly invoke it, and only sees the
 prompts you type — never submission data. API keys are encrypted at rest.
+
+Analytics is cookieless and PII-free: it records event types and field ids
+(never field values), a `sessionStorage` session id, and a daily-salted IP
+hash for unique counts — all in your own database. It honours Do-Not-Track and
+Global Privacy Control. See [analytics.md](https://github.com/PaulBratslavsky/strapi-plugin-form-kit/blob/main/docs/analytics.md#privacy).
 
 ---
 

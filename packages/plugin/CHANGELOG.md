@@ -5,6 +5,24 @@ is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- **Form analytics dashboard.** Every form gets an **Analytics** tab: a funnel
+  (views → starts → submissions), completion rate, average time to complete, a
+  30-day trend chart, and a per-field drop-off table. Cookieless and PII-free —
+  data lives in your own DB and never leaves it.
+  - Embed runtime fires `view` / `start` / `field_change` / `submit_attempt`
+    via `navigator.sendBeacon`; honours Do-Not-Track and Global Privacy Control.
+  - New public ingest endpoint `POST /api/forms/:slug/events` with its own
+    looser rate limit (~100/min per IP+form) and a 100-event-per-session cap.
+  - Two Knex-direct tables (`strapi_forms_events`, `strapi_forms_event_rollups`)
+    via migration `0002`. A 5-minute rollup worker seals completed days and
+    prunes raw events past the retention window (default 30 days).
+  - Admin endpoints `GET /admin/forms/:formDocumentId/analytics` + `…/export.csv`.
+  - Privacy controls: `STRAPI_FORMS_ANALYTICS_{ENABLED,RETENTION_DAYS,SALT,ANONYMIZE_IPS_FULLY,RATELIMIT_MAX}`
+    env vars, plus per-form `settings.analytics.enabled`. IPs are hashed with a
+    daily-rotating salt; the admin preview never counts.
+  - New docs page `docs/analytics.md` (what's collected, for your privacy policy).
+  - 15 new unit tests (`aggregate`, `ingest`); suite now 101.
 
 ## [0.4.1] — 2026-05-15
 ### Fixed
