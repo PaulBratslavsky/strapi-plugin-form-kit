@@ -12,6 +12,7 @@ import { validateValues } from './validate';
 import { el, clear } from './dom';
 import { applyThemeToElement } from './theme';
 import { fieldStyleToVars } from './field-style';
+import { createReporter } from './analytics';
 // Inline the stylesheet so the IIFE bundle is one self-contained file.
 // Vite turns ?inline into a string literal at build time; on first render we
 // inject it as a single <style> tag at the document head.
@@ -37,11 +38,24 @@ export const renderInto = (
   target: HTMLElement,
   fetched: FetchedSchema,
   baseUrl: string,
-  options: { hooks?: RenderFormHooks; fieldRenderers?: Record<string, FieldRenderer> } = {}
+  options: {
+    hooks?: RenderFormHooks;
+    fieldRenderers?: Record<string, FieldRenderer>;
+    disableAnalytics?: boolean;
+  } = {}
 ): RenderFormHandle => {
   const schema = fetched.schema;
   const hooks = options.hooks ?? {};
   const customRenderers = options.fieldRenderers ?? {};
+
+  // Best-effort analytics. Inert when disabled (preview) or the visitor has
+  // opted out (DNT / GPC). Per-form opt-out is also enforced server-side.
+  const reporter = createReporter({
+    baseUrl,
+    slug: fetched.slug ?? fetched.formId,
+    disabled: options.disableAnalytics,
+  });
+  let started = false;
   const resolveRenderer = (type: string): FieldRenderer | undefined =>
     customRenderers[type] ?? coreRenderers[type];
 
@@ -167,6 +181,32 @@ export const renderInto = (
 
   target.appendChild(formEl);
 
+  // Analytics instrumentation. `view` fires once on mount; `start` on the
+  // first focus into any field; `field_change` on blur (plus a 5s-idle flush
+  // via reporter.touch). All no-ops when the reporter is inert.
+  reporter.event('view');
+
+  const fieldIdOf = (node: EventTarget | null): string | null => {
+    const wrapper = (node as HTMLElement | null)?.closest?.('[data-field-id]');
+    return wrapper?.getAttribute('data-field-id') ?? null;
+  };
+  const onFocusIn = () => {
+    if (started) return;
+    started = true;
+    reporter.event('start');
+  };
+  const onFocusOut = (e: FocusEvent) => {
+    const fieldId = fieldIdOf(e.target);
+    if (fieldId) reporter.event('field_change', { fieldId });
+  };
+  const onInput = (e: Event) => {
+    const fieldId = fieldIdOf(e.target);
+    if (fieldId) reporter.touch(fieldId);
+  };
+  formEl.addEventListener('focusin', onFocusIn);
+  formEl.addEventListener('focusout', onFocusOut);
+  formEl.addEventListener('input', onInput);
+
   // Submit handler.
   const showFieldErrors = (errors: ValidationErrors) => {
     for (const [fieldId, msgs] of Object.entries(errors)) {
@@ -188,6 +228,7 @@ export const renderInto = (
   const onSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
     clearErrors();
+    reporter.event('submit_attempt');
     submitBtn.disabled = true;
 
     const localErrors = validateValues(schema, data);
@@ -210,7 +251,11 @@ export const renderInto = (
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: payload, honeypot: honeypotInput?.value ?? '' }),
+        body: JSON.stringify({
+          data: payload,
+          honeypot: honeypotInput?.value ?? '',
+          ...(reporter.sessionId ? { sessionId: reporter.sessionId } : {}),
+        }),
       });
 
       if (res.status === 201) {
@@ -250,6 +295,10 @@ export const renderInto = (
   return {
     destroy: () => {
       formEl.removeEventListener('submit', onSubmit);
+      formEl.removeEventListener('focusin', onFocusIn);
+      formEl.removeEventListener('focusout', onFocusOut);
+      formEl.removeEventListener('input', onInput);
+      reporter.destroy();
       clear(target);
     },
   };

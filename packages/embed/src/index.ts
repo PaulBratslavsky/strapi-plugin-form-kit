@@ -12,6 +12,7 @@ export type {
   RenderFormHooks,
   FieldRenderer,
   FetchedSchema,
+  AnalyticsEventType,
 } from './types';
 
 const fetchSchema = async (baseUrl: string, slug: string): Promise<FetchedSchema> => {
@@ -32,6 +33,7 @@ export const renderForm = async (options: RenderFormOptions): Promise<RenderForm
   return renderInto(options.target, fetched, options.baseUrl, {
     hooks: options.hooks,
     fieldRenderers: options.fieldRenderers,
+    disableAnalytics: options.disableAnalytics,
   });
 };
 
